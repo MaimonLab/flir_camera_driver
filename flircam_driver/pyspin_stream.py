@@ -26,7 +26,7 @@ class SpinnakerCameraNode(Node):
         self.get_logger().info(f"cam_id: {self.cam_identifier}")
 
         config_path = Path(
-            "/home/maimon/ros2_template_ws/src",
+            "/home/maimon/ros2_fictrac_ws/src",
             "flircam_driver/config/example_config.yaml",
         )
         example_config = yaml.load(config_path)

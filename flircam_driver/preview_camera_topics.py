@@ -15,19 +15,8 @@ yaml = YAML(typ="safe")
 class ImagePreviewNode(Node):
     def __init__(self):
         super().__init__("image_previewer")
-        # all_topics = self.get_topic_names_and_types()
-        # all_topics = self.get_topic_names_and_types(no_demangle=True)
-        # print(all_topics)
-
-        # camera_topics = []
-        # for topic_tuple in all_topics:
-        #     print(f"found topic: {topic_tuple[0]}")
-        #     if "camera" in topic_tuple[0]:
-        #         camera_topics.append(topic_tuple[0])
-
-        # print(f"Camera topics: {camera_topics}")
         config_path = Path(
-            "/home/maimon/ros2_template_ws/src",
+            "/home/maimon/ros2_fictrac_ws/src",
             "flircam_driver/config/example_config.yaml",
         )
         example_config = yaml.load(config_path)
@@ -49,10 +38,14 @@ class ImagePreviewNode(Node):
 
         img_size = np.array([img_msg.height, img_msg.width]).astype(int)
 
-        img_resized = img_size
-        # img_resized = cv2.resize(cv_image, (img_resized[0], img_resized[1]))
-        im_small = cv2.resize(cv_image, (img_resized[1], img_resized[0]))
-        cv2.imshow(f"cam_{cam_name}", im_small)
+        resize_ratio = 256.0 / max(img_size)
+        if max(img_size) > 256:
+            img_new_size = (img_size * resize_ratio).astype(int)
+            img_resized = cv2.resize(cv_image, (img_new_size[1], img_new_size[0]))
+        else:
+            img_new_size = img_size
+            img_resized = cv_image
+        cv2.imshow(f"cam_{cam_name}", img_resized)
         cv2.waitKey(1)
 
 

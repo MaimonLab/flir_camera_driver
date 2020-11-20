@@ -34,3 +34,41 @@
   Height: 256
   OffsetX: 128
   OffsetY: 128
+
+"18318588":
+  BinningVertical: 2
+  TriggerMode: "Off"
+  GainAuto: "Off"
+  AcquisitionFrameRateAuto: "Off"
+  AcquisitionFrameRateEnabled: True
+  AcquisitionFrameRate: 100
+  LineSelector: "Line3" # PySpin.LineSelector_Line3
+  LineMode: "Output"
+  LineSource: "ExposureActive"
+  LineInverter: True
+  # ExposureMode: "Timed"
+  # ExposureAuto: "Off"
+  # ExposureTime: 8000
+  Width: 256
+  Height: 256
+  OffsetX: 128
+  OffsetY: 128
+
+"18421877":
+  BinningVertical: 2
+  TriggerMode: "Off"
+  GainAuto: "Off"
+  AcquisitionFrameRateAuto: "Off"
+  AcquisitionFrameRateEnabled: True
+  AcquisitionFrameRate: 100
+  LineSelector: "Line3" # PySpin.LineSelector_Line3
+  LineMode: "Output"
+  LineSource: "ExposureActive"
+  LineInverter: True
+  # ExposureMode: "Timed"
+  # ExposureAuto: "Off"
+  # ExposureTime: 8000
+  Width: 256
+  Height: 256
+  OffsetX: 128
+  OffsetY: 128
