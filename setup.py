@@ -13,6 +13,7 @@ setup(
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
         ("share/" + package_name, glob.glob("launch/*.launch.py")),
+        ("share/" + package_name + "/config", glob.glob("config/*.yaml")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
@@ -24,7 +25,7 @@ setup(
     entry_points={
         "console_scripts": [
             "pyspin_stream = flircam_driver.pyspin_stream:main",
-            "preview_camera_topics = flircam_driver.preview_camera_topics:main",
+            # "preview_camera_topics = flircam_driver.preview_camera_topics:main",
         ],
     },
 )

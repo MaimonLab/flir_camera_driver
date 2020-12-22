@@ -1,74 +1,43 @@
-# grasshopper
-"18517933":
-  TriggerMode: "Off"
-  GainAuto: "Off"
-  AcquisitionFrameRateAuto: "Off"
-  AcquisitionFrameRateEnabled: True
-  AcquisitionFrameRate: 50
-  LineSelector: "Line3" # PySpin.LineSelector_Line3
-  LineMode: "Output"
-  LineSource: "ExposureActive"
-  LineInverter: True
-  AutoFunctionAOIsControl: "On"
-  Width: 512
-  Height: 512
-  OffsetX: 500
-  OffsetY: 500
-  BinningVertical: 2
-# chameleon
-"18518215":
-  BinningVertical: 2
-  TriggerMode: "Off"
-  GainAuto: "Off"
-  AcquisitionFrameRateAuto: "Off"
-  AcquisitionFrameRateEnabled: True
-  AcquisitionFrameRate: 100
-  LineSelector: "Line3" # PySpin.LineSelector_Line3
-  LineMode: "Output"
-  LineSource: "ExposureActive"
-  LineInverter: True
-  # ExposureMode: "Timed"
-  # ExposureAuto: "Off"
-  # ExposureTime: 8000
-  Width: 256
-  Height: 256
-  OffsetX: 128
-  OffsetY: 128
-
-"18318588":
-  BinningVertical: 2
-  TriggerMode: "Off"
-  GainAuto: "Off"
-  AcquisitionFrameRateAuto: "Off"
-  AcquisitionFrameRateEnabled: True
-  AcquisitionFrameRate: 100
-  LineSelector: "Line3" # PySpin.LineSelector_Line3
-  LineMode: "Output"
-  LineSource: "ExposureActive"
-  LineInverter: True
-  # ExposureMode: "Timed"
-  # ExposureAuto: "Off"
-  # ExposureTime: 8000
-  Width: 256
-  Height: 256
-  OffsetX: 128
-  OffsetY: 128
-
-"18421877":
-  BinningVertical: 2
-  TriggerMode: "Off"
-  GainAuto: "Off"
-  AcquisitionFrameRateAuto: "Off"
-  AcquisitionFrameRateEnabled: True
-  AcquisitionFrameRate: 100
-  LineSelector: "Line3" # PySpin.LineSelector_Line3
-  LineMode: "Output"
-  LineSource: "ExposureActive"
-  LineInverter: True
-  # ExposureMode: "Timed"
-  # ExposureAuto: "Off"
-  # ExposureTime: 8000
-  Width: 256
-  Height: 256
-  OffsetX: 128
-  OffsetY: 128
+camera1:
+  ros__parameters:
+    config_found: True
+    cam_id: "18518215"
+    camera_topic_base: "camera/rig1_ball"
+    publish_grayscale: True
+    publish_color: False
+    camera_settings:
+      TriggerMode: "Off"
+      GainAuto: "Off"
+      AcquisitionFrameRateAuto: "Off"
+      AcquisitionFrameRateEnabled: True
+      AcquisitionFrameRate: 50
+      LineSelector: "Line3" # PySpin.LineSelector_Line3
+      LineMode: "Output"
+      LineSource: "ExposureActive"
+      LineInverter: True
+      AutoFunctionAOIsControl: "On"
+      Width: 512
+      Height: 512
+camera2:
+  ros__parameters:
+    config_found: True
+    cam_id: "18318588"
+    camera_topic_base: "camera/rig2_ball"
+    publish_grayscale: True
+    publish_color: False
+    camera_settings:
+      TriggerMode: "Off"
+      GainAuto: "Off"
+      AcquisitionFrameRateAuto: "Off"
+      AcquisitionFrameRateEnabled: True
+      AcquisitionFrameRate: 20
+      LineSelector: "Line3"
+      LineMode: "Output"
+      LineSource: "ExposureActive"
+      LineInverter: True
+      AutoFunctionAOIsControl: "On"
+      Width: 512
+      Height: 512
+      # OffsetX: 500
+      # OffsetY: 500
+      # BinningVertical: 2
