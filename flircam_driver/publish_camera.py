@@ -18,7 +18,7 @@ class SpinnakerCameraNode(Node):
     def __init__(self):
         # print(cam_identifier)
         super().__init__(
-            "pyspin_stream",
+            "publish_camera",
             # allow_undeclared_parameters=True,
             automatically_declare_parameters_from_overrides=True,
         )
@@ -63,25 +63,59 @@ class SpinnakerCameraNode(Node):
         self.cam.init()  # Initialize camera
 
         self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
-
         self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
 
+        # get camera settings
         parameter_dict = self.get_parameters_by_prefix("camera_settings")
         cam_dict = {}
         for param_name, param in parameter_dict.items():
             cam_dict[param_name] = self.get_parameter(
                 f"camera_settings.{param_name}"
             ).value
-        # self.get_logger().info(f"param_dict: {cam_dict}")
+
+        # set camera settings
         for attribute_name, attribute_value in cam_dict.items():
             setattr(self.cam, attribute_name, attribute_value)
-            # self.get_logger().info(f"setting {attribute_name}: {attribute_value}")
+
+        # get chunk settings
+        chunk_params = self.get_parameters_by_prefix("camera_chunkdata")
+        chunk_dict = {}
+        for chunk_paramname, chunkparam in chunk_params.items():
+            # self.get_logger().info(f"{chunk_paramname}, {chunkparam}")
+            chunk_paramval = self.get_parameter(
+                f"camera_chunkdata.{chunk_paramname}"
+            ).value
+
+            chunk_parts = chunk_paramname.split(".")
+            chunk_selector = chunk_parts[0]
+            sub_dict = {chunk_parts[1]: chunk_paramval}
+            if chunk_dict.get(chunk_selector, "") == "":
+                chunk_dict[chunk_selector] = sub_dict
+            else:
+                chunk_dict[chunk_selector] = {**chunk_dict[chunk_selector], **sub_dict}
+
+        # set chunk settings
+        for chunkselector, chunkswitches in chunk_dict.items():
+            setattr(self.cam, "ChunkSelector", chunkselector)
+            for chunkswitch, chunkbool in chunkswitches.items():
+                setattr(self.cam, chunkswitch, chunkbool)
+
         self.get_logger().info(f"Camera settings successful")
 
     def stream_camera(self):
-        img_cv = self.cam.get_array()
+        img_cv, chunk_data = self.cam.get_array(get_chunk=True)
+
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
-        img_msg.header.frame_id = self.cam_id
+
+        timestamp = chunk_data.GetTimestamp()
+        frame_id = chunk_data.GetFrameID()
+
+        secs = int(timestamp / 1e9)
+        nsecs = int(timestamp - secs * 1e9)
+
+        img_msg.header.stamp.sec = secs
+        img_msg.header.stamp.nanosec = nsecs
+        img_msg.header.frame_id = str(frame_id)
         self.pub_stream.publish(img_msg)
 
     def shutdown_hook(self):

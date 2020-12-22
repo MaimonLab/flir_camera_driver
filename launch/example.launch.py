@@ -16,7 +16,7 @@ def generate_launch_description():
     camera1 = Node(
         package="flircam_driver",
         name="camera1",
-        executable="pyspin_stream",
+        executable="publish_camera",
         parameters=[config],
     )
     ld.add_action(camera1)
@@ -24,7 +24,7 @@ def generate_launch_description():
     camera2 = Node(
         package="flircam_driver",
         name="camera2",
-        executable="pyspin_stream",
+        executable="publish_camera",
         parameters=[config],
     )
     ld.add_action(camera2)

@@ -18,6 +18,13 @@ camera1:
       AutoFunctionAOIsControl: "On"
       Width: 512
       Height: 512
+    camera_chunkdata:
+      FrameCounter:
+        ChunkEnable: True
+        ChunkModeActive: True
+      Timestamp:
+        ChunkEnable: True
+        ChunkModeActive: True
 camera2:
   ros__parameters:
     config_found: True
@@ -41,3 +48,10 @@ camera2:
       # OffsetX: 500
       # OffsetY: 500
       # BinningVertical: 2
+    camera_chunkdata:
+      FrameCounter:
+        ChunkEnable: True
+        ChunkModeActive: True
+      Timestamp:
+        ChunkEnable: True
+        ChunkModeActive: True

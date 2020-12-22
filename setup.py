@@ -24,7 +24,7 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "pyspin_stream = flircam_driver.pyspin_stream:main",
+            "publish_camera = flircam_driver.publish_camera:main",
             # "preview_camera_topics = flircam_driver.preview_camera_topics:main",
         ],
     },
