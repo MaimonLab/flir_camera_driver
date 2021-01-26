@@ -10,14 +10,19 @@ camera1:
       GainAuto: "Off"
       AcquisitionFrameRateAuto: "Off"
       AcquisitionFrameRateEnabled: True
-      AcquisitionFrameRate: 50
+      AcquisitionFrameRate: 120 # max around 400, image does get dark
       LineSelector: "Line3" # PySpin.LineSelector_Line3
       LineMode: "Output"
       LineSource: "ExposureActive"
       LineInverter: True
       AutoFunctionAOIsControl: "On"
-      Width: 512
-      Height: 512
+      Width: 320
+      Height: 312
+      OffsetX: 160
+      OffsetY: 24
+      BinningVertical: 2 #automatically bins horizontal as well
+      # VideoMode: Mode1 # bins horitonzal and vertical
+
     camera_chunkdata:
       FrameCounter:
         ChunkEnable: True

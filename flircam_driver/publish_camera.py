@@ -46,14 +46,17 @@ class SpinnakerCameraNode(Node):
         self.cam_init()
         self.cam.start()
 
-        self.publish_timer = self.create_timer(
-            1 / self.cam_framerate, self.stream_camera
-        )
+        # self.publish_timer = self.create_timer(
+        #     1 / self.cam_framerate, self.stream_camera
+        # )
         # create topic
         topic_name = f"{self.camera_topic_base}/image_mono"
         self.pub_stream = self.create_publisher(Image, topic_name, 1)
         self.bridge = CvBridge()
         self.get_logger().info("Node initialized")
+
+        while rclpy.ok():
+            self.stream_camera()
 
     def cam_init(self):
         if self.cam_id is None:
