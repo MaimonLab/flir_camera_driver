@@ -1,58 +1,28 @@
 camera1:
   ros__parameters:
     config_found: True
-    cam_id: "18518215"
+    reset_camera_settings: True
+    cam_id: "18497067"
     camera_topic_base: "camera/rig1_ball"
     publish_grayscale: True
     publish_color: False
     camera_settings:
+      # AutoFunctionAOIsControl: "On" # not sure what this setting does
       TriggerMode: "Off"
       GainAuto: "Off"
-      AcquisitionFrameRateAuto: "Off"
       AcquisitionFrameRateEnabled: True
-      AcquisitionFrameRate: 120 # max around 400, image does get dark
+      AcquisitionFrameRateAuto: "Off"
+      AcquisitionFrameRate: 120.0 # max around 400, image does get dark
       LineSelector: "Line3" # PySpin.LineSelector_Line3
       LineMode: "Output"
       LineSource: "ExposureActive"
       LineInverter: True
-      AutoFunctionAOIsControl: "On"
-      Width: 320
-      Height: 312
-      OffsetX: 160
-      OffsetY: 24
       BinningVertical: 2 #automatically bins horizontal as well
-      # VideoMode: Mode1 # bins horitonzal and vertical
+      Width: 400
+      Height: 368
+      OffsetX: 160
+      OffsetY: 0
 
-    camera_chunkdata:
-      FrameCounter:
-        ChunkEnable: True
-        ChunkModeActive: True
-      Timestamp:
-        ChunkEnable: True
-        ChunkModeActive: True
-camera2:
-  ros__parameters:
-    config_found: True
-    cam_id: "18318588"
-    camera_topic_base: "camera/rig2_ball"
-    publish_grayscale: True
-    publish_color: False
-    camera_settings:
-      TriggerMode: "Off"
-      GainAuto: "Off"
-      AcquisitionFrameRateAuto: "Off"
-      AcquisitionFrameRateEnabled: True
-      AcquisitionFrameRate: 20
-      LineSelector: "Line3"
-      LineMode: "Output"
-      LineSource: "ExposureActive"
-      LineInverter: True
-      AutoFunctionAOIsControl: "On"
-      Width: 512
-      Height: 512
-      # OffsetX: 500
-      # OffsetY: 500
-      # BinningVertical: 2
     camera_chunkdata:
       FrameCounter:
         ChunkEnable: True

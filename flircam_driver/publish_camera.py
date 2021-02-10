@@ -10,6 +10,7 @@ from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
 from pathlib import Path
+import time
 
 yaml = YAML(typ="safe")
 
@@ -28,6 +29,7 @@ class SpinnakerCameraNode(Node):
             "config_found": False,
             "cam_id": None,
             "camera_topic_base": "/camera/camera_x",
+            "reset_camera_settings": False,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -63,10 +65,21 @@ class SpinnakerCameraNode(Node):
             self.cam = Camera()  # Acquire Camera
         else:
             self.cam = Camera(self.cam_id)  # Acquire Camera
-        self.cam.init()  # Initialize camera
 
+        if self.get_parameter("reset_camera_settings").value:
+
+            self.cam.init()  # Initialize camera
+            self.cam.DeviceReset()
+            self.get_logger().info("Resetting camera, sleeping for 5 seconds")
+            time.sleep(5)
+            if self.cam_id is None:
+                self.cam = Camera()  # Acquire Camera
+            else:
+                self.cam = Camera(self.cam_id)  # Acquire Camera
+
+        self.cam.init()  # Initialize camera
         self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
-        self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
+        # self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
 
         # get camera settings
         parameter_dict = self.get_parameters_by_prefix("camera_settings")
