@@ -10,7 +10,7 @@ camera1:
       GainAuto: "Off"
       AcquisitionFrameRateAuto: "Off"
       AcquisitionFrameRateEnabled: True
-      AcquisitionFrameRate: 50
+      # AcquisitionFrameRate: 50
       LineSelector: "Line3" # PySpin.LineSelector_Line3
       LineMode: "Output"
       LineSource: "ExposureActive"
@@ -18,36 +18,6 @@ camera1:
       AutoFunctionAOIsControl: "On"
       Width: 512
       Height: 512
-    camera_chunkdata:
-      FrameCounter:
-        ChunkEnable: True
-        ChunkModeActive: True
-      Timestamp:
-        ChunkEnable: True
-        ChunkModeActive: True
-camera2:
-  ros__parameters:
-    config_found: True
-    cam_id: "18318588"
-    camera_topic_base: "camera/rig2_ball"
-    publish_grayscale: True
-    publish_color: False
-    camera_settings:
-      TriggerMode: "Off"
-      GainAuto: "Off"
-      AcquisitionFrameRateAuto: "Off"
-      AcquisitionFrameRateEnabled: True
-      AcquisitionFrameRate: 20
-      LineSelector: "Line3"
-      LineMode: "Output"
-      LineSource: "ExposureActive"
-      LineInverter: True
-      AutoFunctionAOIsControl: "On"
-      Width: 512
-      Height: 512
-      # OffsetX: 500
-      # OffsetY: 500
-      # BinningVertical: 2
     camera_chunkdata:
       FrameCounter:
         ChunkEnable: True

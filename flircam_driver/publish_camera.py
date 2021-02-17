@@ -10,6 +10,7 @@ from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
 from pathlib import Path
+import time
 
 yaml = YAML(typ="safe")
 
@@ -43,8 +44,10 @@ class SpinnakerCameraNode(Node):
         self.camera_topic_base = self.get_parameter("camera_topic_base").value
 
         # set all camera settings through pyspin simple
-        self.cam_init()
+        self.set_camera_settings()
+
         self.cam.start()
+        self.latch_camera_for_time_offset()
 
         self.publish_timer = self.create_timer(
             1 / self.cam_framerate, self.stream_camera
@@ -55,12 +58,36 @@ class SpinnakerCameraNode(Node):
         self.bridge = CvBridge()
         self.get_logger().info("Node initialized")
 
-    def cam_init(self):
+    def latch_camera_for_time_offset(self):
+
+        # latching should work like this:
+        # self.cam.cam.TimestampLatch.Execute()  # set camera to store the latch
+        # computer_time = time.time_ns()
+        # camera_time = (
+        #     self.cam.cam.TimestampLatchValue.GetValue()
+        # )  # return the latched value
+
+        # self.get_logger().info(
+        #     f"camera time: {camera_time}, computer time: {computer_time}"
+        # )
+        pass
+
+    def set_camera_settings(self):
         if self.cam_id is None:
             self.cam = Camera()  # Acquire Camera
         else:
             self.cam = Camera(self.cam_id)  # Acquire Camera
+        # if True:
+        # self.cam.init()  # Initialize camera
+        # self.cam.DeviceReset()
+        # time.sleep(6)
+        # if self.cam_id is None:
+        #     self.cam = Camera()  # Acquire Camera
+        # else:
+        #     self.cam = Camera(self.cam_id)  # Acquire Camera
         self.cam.init()  # Initialize camera
+
+        # self.cam.
 
         self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
         self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
