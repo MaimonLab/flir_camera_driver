@@ -58,8 +58,9 @@ class SpinnakerCameraNode(Node):
         self.pub_stream = self.create_publisher(Image, topic_name, 1)
         self.bridge = CvBridge()
         self.get_logger().info("Node initialized")
+        while rclpy.ok():
+            self.stream_camera()
 
-<<<<<<< HEAD
     def latch_camera_for_time_offset(self):
 
         # latching should work like this:
@@ -75,30 +76,12 @@ class SpinnakerCameraNode(Node):
         pass
 
     def set_camera_settings(self):
-=======
-        while rclpy.ok():
-            self.stream_camera()
 
-    def cam_init(self):
->>>>>>> dee01f51d005e3684e054eb90281983569b6ec94
         if self.cam_id is None:
             self.cam = Camera()  # Acquire Camera
         else:
             self.cam = Camera(self.cam_id)  # Acquire Camera
-<<<<<<< HEAD
-        # if True:
-        # self.cam.init()  # Initialize camera
-        # self.cam.DeviceReset()
-        # time.sleep(6)
-        # if self.cam_id is None:
-        #     self.cam = Camera()  # Acquire Camera
-        # else:
-        #     self.cam = Camera(self.cam_id)  # Acquire Camera
         self.cam.init()  # Initialize camera
-
-        # self.cam.
-
-=======
 
         if self.get_parameter("reset_camera_settings").value:
 
@@ -112,7 +95,6 @@ class SpinnakerCameraNode(Node):
                 self.cam = Camera(self.cam_id)  # Acquire Camera
 
         self.cam.init()  # Initialize camera
->>>>>>> dee01f51d005e3684e054eb90281983569b6ec94
         self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
         # self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
 
