@@ -13,6 +13,8 @@ import numpy as np
 from ruamel.yaml import YAML
 from pathlib import Path
 
+import time
+
 yaml = YAML(typ="safe")
 
 
@@ -79,8 +81,33 @@ class SpinnakerCameraNode(Node):
         else:
             self.cam = self.cam_list.GetByIndex(self.cam_id)
 
+        # if self.get_parameter("reset_camera_settings").value:
+
+        #     self.cam.Init()  # Initialize camera
+        #     self.cam.DeviceReset()
+        #     self.get_logger().info("Resetting camera, sleeping for 5 seconds")
+        #     time.sleep(5)
+
+        # if isinstance(self.cam_id, str):
+        #     self.cam = self.cam_list.GetBySerial(self.cam_id)
+        # else:
+        #     self.cam = self.cam_list.GetByIndex(self.cam_id)
+
         self.cam.Init()
         print(f"Selected cam: {self.cam.DeviceID.ToString()}")
+
+        # do latch
+        self.cam.TimestampLatch.Execute()
+        time_nanosec = self.get_clock().now().nanoseconds
+
+        timestamp = self.cam.Timestamp.GetValue()
+
+        self.offset_nanosec = time_nanosec - timestamp
+
+        print(f"Current time    {time_nanosec}")
+        print(f"Timestamp latch {timestamp}")
+        print(f"Offset:         {self.offset_nanosec}")
+
         self.cam.BeginAcquisition()
 
         # cam_list =
@@ -143,7 +170,7 @@ class SpinnakerCameraNode(Node):
             # Print image information
             width = image_result.GetWidth()
             height = image_result.GetHeight()
-            print(f"Camera grabbed image , width = {width}, height = {height}")
+            # print(f"Camera grabbed image , width = {width}, height = {height}")
 
             # Convert image to mono 8
             # image_converted = image_result.Convert(
@@ -158,11 +185,9 @@ class SpinnakerCameraNode(Node):
             cv2.imshow("image", image)
             cv2.waitKey(1)
 
-            # img_cv, chunk_data = self.cam.get_array(get_chunk=True)
-
             img_msg = self.bridge.cv2_to_imgmsg(image)
 
-            timestamp = chunk_data.GetTimestamp()
+            timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
             frame_id = chunk_data.GetFrameID()
 
             secs = int(timestamp / 1e9)

@@ -3,7 +3,7 @@ camera1:
     config_found: True
     # cam_id: "18518215"
     cam_id: "18421586"
-    reset_camera_settings: False
+    reset_camera_settings: True
     camera_topic_base: "camera/rig1_ball"
     publish_grayscale: True
     publish_color: False
@@ -11,6 +11,7 @@ camera1:
       # AutoFunctionAOIsControl: "On" # not sure what this setting does
       TriggerMode: "Off"
       GainAuto: "Off"
+      AcquisitionFrameRateAuto: "Off"
       AcquisitionFrameRateEnabled: True
       AcquisitionFrameRate: 50
       LineSelector: "Line3" # PySpin.LineSelector_Line3
@@ -31,6 +32,7 @@ camera2:
   ros__parameters:
     config_found: True
     # cam_id: "18318588"
+    reset_camera_settings: True
     cam_id: "20400128"
     camera_topic_base: "camera/rig2_ball"
     publish_grayscale: True
