@@ -33,7 +33,7 @@ def generate_launch_description():
         package="rqt_image_view",
         name="image_preview",
         executable="rqt_image_view",
-        arguments=["/camera/camera_x/image_mono"],
+        arguments=["/camera/rig1_ball/image_mono"],
     )
     ld.add_action(rqt_viewer)
 

@@ -10,6 +10,7 @@ from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
 from pathlib import Path
+import time
 
 yaml = YAML(typ="safe")
 
@@ -28,6 +29,7 @@ class SpinnakerCameraNode(Node):
             "config_found": False,
             "cam_id": None,
             "camera_topic_base": "/camera/camera_x",
+            "reset_camera_settings": False,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -43,27 +45,58 @@ class SpinnakerCameraNode(Node):
         self.camera_topic_base = self.get_parameter("camera_topic_base").value
 
         # set all camera settings through pyspin simple
-        self.cam_init()
-        self.cam.start()
+        self.set_camera_settings()
 
-        self.publish_timer = self.create_timer(
-            1 / self.cam_framerate, self.stream_camera
-        )
+        self.cam.start()
+        self.latch_camera_for_time_offset()
+
+        # self.publish_timer = self.create_timer(
+        #     1 / self.cam_framerate, self.stream_camera
+        # )
         # create topic
         topic_name = f"{self.camera_topic_base}/image_mono"
         self.pub_stream = self.create_publisher(Image, topic_name, 1)
         self.bridge = CvBridge()
         self.get_logger().info("Node initialized")
+        while rclpy.ok():
+            self.stream_camera()
 
-    def cam_init(self):
+    def latch_camera_for_time_offset(self):
+
+        # latching should work like this:
+        # self.cam.cam.TimestampLatch.Execute()  # set camera to store the latch
+        # computer_time = time.time_ns()
+        # camera_time = (
+        #     self.cam.cam.TimestampLatchValue.GetValue()
+        # )  # return the latched value
+
+        # self.get_logger().info(
+        #     f"camera time: {camera_time}, computer time: {computer_time}"
+        # )
+        pass
+
+    def set_camera_settings(self):
+
         if self.cam_id is None:
             self.cam = Camera()  # Acquire Camera
         else:
             self.cam = Camera(self.cam_id)  # Acquire Camera
         self.cam.init()  # Initialize camera
 
+        if self.get_parameter("reset_camera_settings").value:
+
+            self.cam.init()  # Initialize camera
+            self.cam.DeviceReset()
+            self.get_logger().info("Resetting camera, sleeping for 5 seconds")
+            time.sleep(5)
+            if self.cam_id is None:
+                self.cam = Camera()  # Acquire Camera
+            else:
+                self.cam = Camera(self.cam_id)  # Acquire Camera
+
+        self.cam.init()  # Initialize camera
         self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
-        self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
+        # self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
 
         # get camera settings
         parameter_dict = self.get_parameters_by_prefix("camera_settings")

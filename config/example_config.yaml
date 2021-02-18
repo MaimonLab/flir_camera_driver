@@ -3,13 +3,14 @@ camera1:
     config_found: True
     # cam_id: "18518215"
     cam_id: "18421586"
+    reset_camera_settings: False
     camera_topic_base: "camera/rig1_ball"
     publish_grayscale: True
     publish_color: False
     camera_settings:
+      # AutoFunctionAOIsControl: "On" # not sure what this setting does
       TriggerMode: "Off"
       GainAuto: "Off"
-      AcquisitionFrameRateAuto: "Off"
       AcquisitionFrameRateEnabled: True
       AcquisitionFrameRate: 50
       LineSelector: "Line3" # PySpin.LineSelector_Line3
@@ -38,18 +39,16 @@ camera2:
       TriggerMode: "Off"
       GainAuto: "Off"
       AcquisitionFrameRateAuto: "Off"
-      AcquisitionFrameRateEnabled: True
-      AcquisitionFrameRate: 20
-      LineSelector: "Line3"
+      AcquisitionFrameRate: 120.0 # max around 400, image does get dark
+      LineSelector: "Line3" # PySpin.LineSelector_Line3
       LineMode: "Output"
       LineSource: "ExposureActive"
       LineInverter: True
-      AutoFunctionAOIsControl: "On"
-      # Width: 512
-      # Height: 512
-      # OffsetX: 500
-      # OffsetY: 500
-      # BinningVertical: 2
+      BinningVertical: 2 #automatically bins horizontal as well
+      Width: 400
+      Height: 368
+      OffsetX: 160
+      OffsetY: 0
     camera_chunkdata:
       FrameCounter:
         ChunkEnable: True
