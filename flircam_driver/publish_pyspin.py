@@ -8,6 +8,7 @@ from rclpy.node import Node
 import PySpin
 import cv2
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import Temperature
 from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
@@ -50,6 +51,14 @@ class SpinnakerCameraNode(Node):
         self.cam_init()
         # self.cam.start()
         self.cam_framerate = 30.0
+
+        # latency
+        self.declare_parameter("publish_latency", True)
+        self.publish_latency = self.get_parameter("publish_latency").value
+        self.declare_parameter("latency_topic", "camera/rigX/latency")
+        latency_topic = self.get_parameter("latency_topic").value
+        if self.publish_latency:
+            self.pub_latency = self.create_publisher(Temperature, latency_topic, 10)
 
         self.publish_timer = self.create_timer(
             1 / self.cam_framerate, self.stream_camera
@@ -214,6 +223,7 @@ class SpinnakerCameraNode(Node):
 
             timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
             frame_id = chunk_data.GetFrameID()
+            print(frame_id)
 
             secs = int(timestamp / 1e9)
             nsecs = int(timestamp - secs * 1e9)
@@ -222,6 +232,19 @@ class SpinnakerCameraNode(Node):
             img_msg.header.stamp.nanosec = nsecs
             img_msg.header.frame_id = str(frame_id)
             self.pub_stream.publish(img_msg)
+
+        if self.publish_latency:
+            latency_msg = Temperature()
+            latency_msg.header = img_msg.header
+
+            # msg_timestamp = (
+            #     img_msg.header.stamp.sec * 1e9 + img_msg.header.stamp.nanosec
+            # )
+            current_timestamp = self.get_clock().now().nanoseconds
+            latency = np.float(current_timestamp - timestamp)
+
+            latency_msg.temperature = latency
+            self.pub_latency.publish(latency_msg)
 
     def shutdown_hook(self):
         print("executing shutdown hook")
