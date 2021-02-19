@@ -74,7 +74,7 @@ class SpinnakerCameraNode(Node):
             # nodemap_tldevice = cam.GetTLDeviceNodeMap()
             serial_number = cam.TLDevice.DeviceSerialNumber.ToString()
             cam_serial_numbers.append(serial_number)
-            print(f"Device serial found: {serial_number}")
+            # print(f"Device serial found: {serial_number}")
 
         if isinstance(self.cam_id, str):
             self.cam = self.cam_list.GetBySerial(self.cam_id)
@@ -94,7 +94,10 @@ class SpinnakerCameraNode(Node):
         #     self.cam = self.cam_list.GetByIndex(self.cam_id)
 
         self.cam.Init()
-        print(f"Selected cam: {self.cam.DeviceID.ToString()}")
+        serial_number = self.cam.DeviceID.ToString()
+        other_cams = [x for x in cam_serial_numbers if x != serial_number]
+
+        print(f"Cam streaming: {serial_number}, other cams found {other_cams}")
 
         # do latch
         self.cam.TimestampLatch.Execute()
@@ -108,9 +111,39 @@ class SpinnakerCameraNode(Node):
         print(f"Timestamp latch {timestamp}")
         print(f"Offset:         {self.offset_nanosec}")
 
+        # Get all parameters to set
+        parameter_dict = self.get_parameters_by_prefix("camera_settings")
+        cam_dict = {}
+        for param_name, param in parameter_dict.items():
+            cam_dict[param_name] = self.get_parameter(
+                f"camera_settings.{param_name}"
+            ).value
+
+        cam_dict["AcquisitionFrameRateEnable"] = True
+        cam_dict["AcquisitionFrameRate"] = 120.0
+
+        for key, value in cam_dict.items():
+            print(key, value)
+            # breakpoint()
+
+            # attribute = getattr(self.cam, key)
+            # print(f"attribute: {key}, getvalue: {attribute.GetValue()}")
+            # self.get_logger().info(
+            #     f"attribute: {key}, getvalue: {attribute.GetValue()}"
+            # )
+            # attribute.GetValue()
+            # attribute.SetValue(value)
+            # breakpoint()
+            # print(f"attribute: {key}, getvalue: {attribute.GetValue()}")
+            # self.get_logger().info(
+            #     f"attribute: {key}, getvalue: {attribute.GetValue()}"
+            # )
+
         self.cam.BeginAcquisition()
 
-        # cam_list =
+        # self.cam.
+
+        # # cam_list =
         # if self.cam_id is None:
         #     self.cam = Camera()  # Acquire Camera
         # else:
@@ -119,14 +152,6 @@ class SpinnakerCameraNode(Node):
 
         # self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
         # self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
-
-        # # get camera settings
-        # parameter_dict = self.get_parameters_by_prefix("camera_settings")
-        # cam_dict = {}
-        # for param_name, param in parameter_dict.items():
-        #     cam_dict[param_name] = self.get_parameter(
-        #         f"camera_settings.{param_name}"
-        #     ).value
 
         # # set camera settings
         # for attribute_name, attribute_value in cam_dict.items():

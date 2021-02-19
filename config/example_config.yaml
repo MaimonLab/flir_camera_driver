@@ -38,9 +38,9 @@ camera2:
     publish_grayscale: True
     publish_color: False
     camera_settings:
-      TriggerMode: "Off"
-      GainAuto: "Off"
-      AcquisitionFrameRateAuto: "Off"
+      TriggerMode: 0
+      GainAuto: 0
+      AcquisitionFrameRateEnable: 0
       AcquisitionFrameRate: 120.0 # max around 400, image does get dark
       LineSelector: "Line3" # PySpin.LineSelector_Line3
       LineMode: "Output"
