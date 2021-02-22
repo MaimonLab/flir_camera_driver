@@ -5,7 +5,7 @@ import rclpy
 from rclpy.node import Node
 from simple_pyspin import Camera
 import cv2
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, Temperature
 from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
@@ -17,10 +17,8 @@ yaml = YAML(typ="safe")
 
 class SpinnakerCameraNode(Node):
     def __init__(self):
-        # print(cam_identifier)
         super().__init__(
             "publish_camera",
-            # allow_undeclared_parameters=True,
             automatically_declare_parameters_from_overrides=True,
         )
 
@@ -28,13 +26,16 @@ class SpinnakerCameraNode(Node):
         default_param = {
             "config_found": False,
             "cam_id": None,
-            "camera_topic_base": "/camera/camera_x",
+            "camera_topic": "/camera/camera_x/image",
             "reset_camera_settings": False,
+            "publish_latency": True,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
                 self.declare_parameter(key, value)
 
+        # config found parameter is just a check that a config_found parameter was set to true.
+        # This checks for the common naming error, where the name of the node in the launch file and the name of the node in the config file are different
         self.get_logger().info(
             f"Config found: {self.get_parameter('config_found').value}"
         )
@@ -42,63 +43,55 @@ class SpinnakerCameraNode(Node):
         self.cam_id = self.get_parameter("cam_id").value
         self.get_logger().info(f"cam_id: {self.cam_id}")
 
-        self.camera_topic_base = self.get_parameter("camera_topic_base").value
+        self.camera_topic = self.get_parameter("camera_topic").value
 
-        # set all camera settings through pyspin simple
+        # Call method that sets camera properties
         self.set_camera_settings()
 
         self.cam.start()
-        self.latch_camera_for_time_offset()
+        self.offset_nanosec = self.latch_timing_offset()
 
-        # self.publish_timer = self.create_timer(
-        #     1 / self.cam_framerate, self.stream_camera
-        # )
-        # create topic
-        topic_name = f"{self.camera_topic_base}/image_mono"
-        self.pub_stream = self.create_publisher(Image, topic_name, 1)
+        self.publish_latency = self.get_parameter("publish_latency").value
+        self.declare_parameter("latency_topic", "camera/rigX/latency")
+        latency_topic = self.get_parameter("latency_topic").value
+        if self.publish_latency:
+            self.pub_latency = self.create_publisher(Temperature, latency_topic, 10)
+
+        # setup image publisher
+        self.pub_stream = self.create_publisher(Image, self.camera_topic, 1)
         self.bridge = CvBridge()
         self.get_logger().info("Node initialized")
-        while rclpy.ok():
-            self.stream_camera()
 
-    def latch_camera_for_time_offset(self):
-
-        # latching should work like this:
-        # self.cam.cam.TimestampLatch.Execute()  # set camera to store the latch
-        # computer_time = time.time_ns()
-        # camera_time = (
-        #     self.cam.cam.TimestampLatchValue.GetValue()
-        # )  # return the latched value
-
-        # self.get_logger().info(
-        #     f"camera time: {camera_time}, computer time: {computer_time}"
-        # )
-        pass
+    def latch_timing_offset(self):
+        self.cam.cam.TimestampLatch.Execute()
+        time_nanosec = self.get_clock().now().nanoseconds
+        timestamp = self.cam.cam.Timestamp.GetValue()
+        offset_nanosec = time_nanosec - timestamp
+        return offset_nanosec
 
     def set_camera_settings(self):
-
         if self.cam_id is None:
-            self.cam = Camera()  # Acquire Camera
+            self.cam = Camera()
         else:
-            self.cam = Camera(self.cam_id)  # Acquire Camera
-        self.cam.init()  # Initialize camera
+            self.cam = Camera(self.cam_id)
+        self.cam.init()
 
+        # Camera Reset
+        # The camera will actually turn off and on, resetting all parameters to the default
         if self.get_parameter("reset_camera_settings").value:
-
-            self.cam.init()  # Initialize camera
+            self.cam.init()
             self.cam.DeviceReset()
             self.get_logger().info("Resetting camera, sleeping for 5 seconds")
             time.sleep(5)
             if self.cam_id is None:
-                self.cam = Camera()  # Acquire Camera
+                self.cam = Camera()
             else:
-                self.cam = Camera(self.cam_id)  # Acquire Camera
+                self.cam = Camera(self.cam_id)
 
-        self.cam.init()  # Initialize camera
+        self.cam.init()
         self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
-        # self.cam_framerate = self.cam.get_info("AcquisitionFrameRate")["value"]
 
-        # get camera settings
+        # get desired camera settings
         parameter_dict = self.get_parameters_by_prefix("camera_settings")
         cam_dict = {}
         for param_name, param in parameter_dict.items():
@@ -114,7 +107,6 @@ class SpinnakerCameraNode(Node):
         chunk_params = self.get_parameters_by_prefix("camera_chunkdata")
         chunk_dict = {}
         for chunk_paramname, chunkparam in chunk_params.items():
-            # self.get_logger().info(f"{chunk_paramname}, {chunkparam}")
             chunk_paramval = self.get_parameter(
                 f"camera_chunkdata.{chunk_paramname}"
             ).value
@@ -140,7 +132,7 @@ class SpinnakerCameraNode(Node):
 
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
 
-        timestamp = chunk_data.GetTimestamp()
+        timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
         frame_id = chunk_data.GetFrameID()
 
         secs = int(timestamp / 1e9)
@@ -151,8 +143,17 @@ class SpinnakerCameraNode(Node):
         img_msg.header.frame_id = str(frame_id)
         self.pub_stream.publish(img_msg)
 
+        if self.publish_latency:
+            latency_msg = Temperature()
+            latency_msg.header = img_msg.header
+            current_timestamp = self.get_clock().now().nanoseconds
+            latency = np.float(current_timestamp - timestamp)
+            latency_msg.temperature = latency
+            self.pub_latency.publish(latency_msg)
+
     def shutdown_hook(self):
         print("executing shutdown hook")
+        self.get_logger().info("Releasing camera")
         self.cam.close()  # You should explicitly clean up
 
 
@@ -160,7 +161,8 @@ def main(args=None):
     rclpy.init()
     camera_node = SpinnakerCameraNode()
     rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
-    rclpy.spin(camera_node)
+    while rclpy.ok():
+        camera_node.stream_camera()
     rclpy.shutdown()
 
 

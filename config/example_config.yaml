@@ -1,10 +1,10 @@
 camera1:
   ros__parameters:
     config_found: True
-    # cam_id: "18518215"
-    cam_id: "18421586"
+    cam_id: "18518215"
+    # cam_id: "18421586"
     reset_camera_settings: True
-    camera_topic_base: "camera/rig1_ball"
+    camera_topic: "camera/rig1_ball/image_mono"
     publish_grayscale: True
     publish_color: False
     camera_settings:
@@ -33,19 +33,20 @@ camera2:
     config_found: True
     # cam_id: "18318588"
     reset_camera_settings: True
-    cam_id: "20400128"
-    camera_topic_base: "camera/rig2_ball"
+    # cam_id: "20400128"
+    cam_id: "18518215"
+    camera_topic: "camera/rig2_ball/image"
     publish_grayscale: True
     publish_color: False
     camera_settings:
       TriggerMode: 0
       GainAuto: 0
-      AcquisitionFrameRateEnable: 0
+      # AcquisitionFrameRateEnable: 0
       AcquisitionFrameRate: 120.0 # max around 400, image does get dark
-      LineSelector: "Line3" # PySpin.LineSelector_Line3
-      LineMode: "Output"
-      LineSource: "ExposureActive"
-      LineInverter: True
+      # LineSelector: "Line3" # PySpin.LineSelector_Line3
+      # LineMode: "Output"
+      # LineSource: "ExposureActive"
+      # LineInverter: True
       BinningVertical: 2 #automatically bins horizontal as well
       Width: 400
       Height: 368
