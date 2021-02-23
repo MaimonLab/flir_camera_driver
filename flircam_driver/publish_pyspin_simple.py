@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 
-import sys
 import rclpy
 from rclpy.node import Node
 from simple_pyspin import Camera
-import cv2
-from sensor_msgs.msg import Image, Temperature
+from sensor_msgs.msg import Image
+from fic_trac.msg import Latency
 from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
-from pathlib import Path
 import time
 
 yaml = YAML(typ="safe")
@@ -55,7 +53,7 @@ class SpinnakerCameraNode(Node):
         self.declare_parameter("latency_topic", "camera/rigX/latency")
         latency_topic = self.get_parameter("latency_topic").value
         if self.publish_latency:
-            self.pub_latency = self.create_publisher(Temperature, latency_topic, 10)
+            self.pub_latency = self.create_publisher(Latency, latency_topic, 10)
 
         # setup image publisher
         self.pub_stream = self.create_publisher(Image, self.camera_topic, 1)
@@ -144,11 +142,11 @@ class SpinnakerCameraNode(Node):
         self.pub_stream.publish(img_msg)
 
         if self.publish_latency:
-            latency_msg = Temperature()
+            latency_msg = Latency()
             latency_msg.header = img_msg.header
             current_timestamp = self.get_clock().now().nanoseconds
             latency = np.float(current_timestamp - timestamp)
-            latency_msg.temperature = latency
+            latency_msg.latency_ms = (latency) / 1e6
             self.pub_latency.publish(latency_msg)
 
     def shutdown_hook(self):
