@@ -29,6 +29,7 @@ class SpinnakerCameraNode(Node):
             "camera_topic": "/camera/camera_x/image",
             "reset_camera_settings": False,
             "publish_latency": True,
+            "latency_topic": "camera/rigX/latency",
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -52,8 +53,9 @@ class SpinnakerCameraNode(Node):
         self.offset_nanosec = self.latch_timing_offset()
 
         self.publish_latency = self.get_parameter("publish_latency").value
-        self.declare_parameter("latency_topic", "camera/rigX/latency")
         latency_topic = self.get_parameter("latency_topic").value
+        self.get_logger().info(f"Latency topic for camera: {latency_topic}")
+
         if self.publish_latency:
             self.pub_latency = self.create_publisher(Temperature, latency_topic, 10)
 

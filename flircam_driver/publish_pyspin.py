@@ -66,7 +66,7 @@ class SpinnakerCameraNode(Node):
         # setup latency publisher
         # self.declare_parameter("publish_latency", True)
         self.publish_latency = self.get_parameter("publish_latency").value
-        self.declare_parameter("latency_topic", "camera/rigX/latency")
+        # self.declare_parameter("latency_topic", "camera/rigX/latency")
         latency_topic = self.get_parameter("latency_topic").value
         if self.publish_latency:
             self.pub_latency = self.create_publisher(Temperature, latency_topic, 10)
