@@ -1,9 +1,9 @@
 camera1:
   ros__parameters:
     config_found: True
-    # cam_id: "18518215"
+    cam_id: "18518215"
     # cam_id: "18421586"
-    cam_id: "18497067"
+    # cam_id: "18497067"
     reset_camera_settings: True
     camera_topic: "camera/rig1_ball/image_mono"
     latency_topic: "camera/rig1_ball/latency"

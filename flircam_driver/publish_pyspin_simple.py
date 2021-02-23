@@ -48,12 +48,16 @@ class SpinnakerCameraNode(Node):
         self.set_camera_settings()
 
         self.cam.start()
-        self.offset_nanosec = self.latch_timing_offset()
 
+        # latch a timestamp to find the offset betweem computer and camera clock
+        self.latch_timing_offset()
+        # setup parameters to periodically update latch period
+        self.last_latch_time = time.time()
+        self.latch_timer_period = 3600
+
+        # publish_latency
         self.publish_latency = self.get_parameter("publish_latency").value
         latency_topic = self.get_parameter("latency_topic").value
-        self.get_logger().info(f"Latency topic for camera: {latency_topic}")
-
         if self.publish_latency:
             self.pub_latency = self.create_publisher(Latency, latency_topic, 10)
 
@@ -66,15 +70,18 @@ class SpinnakerCameraNode(Node):
         self.cam.cam.TimestampLatch.Execute()
         time_nanosec = self.get_clock().now().nanoseconds
         timestamp = self.cam.cam.Timestamp.GetValue()
-        offset_nanosec = time_nanosec - timestamp
-        return offset_nanosec
+        self.offset_nanosec = time_nanosec - timestamp
+        self.get_logger().info(f"Latched timing offset: {self.offset_nanosec}")
 
     def set_camera_settings(self):
         if self.cam_id is None:
             self.cam = Camera()
         else:
             self.cam = Camera(self.cam_id)
-        self.cam.init()
+        try:
+            self.cam.init()
+        except:
+            self.get_logger().error(f"Could not open camera with id {self.cam_id}")
 
         # Camera Reset
         # The camera will actually turn off and on, resetting all parameters to the default
@@ -150,6 +157,10 @@ class SpinnakerCameraNode(Node):
             latency = np.float(current_timestamp - timestamp)
             latency_msg.latency_ms = (latency) / 1e6
             self.pub_latency.publish(latency_msg)
+
+        if (time.time() - self.last_latch_time) > self.latch_timer_period:
+            self.latch_timing_offset()
+            self.last_latch_time = time.time()
 
     def shutdown_hook(self):
         print("executing shutdown hook")
