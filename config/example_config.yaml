@@ -12,7 +12,7 @@ camera1:
     camera_settings:
       # AutoFunctionAOIsControl: "On" # not sure what this setting does
       TriggerMode: "Off"
-      GainAuto: "Off"
+      GainAuto: "Continuous"
       AcquisitionFrameRateAuto: "Off"
       AcquisitionFrameRateEnabled: True
       AcquisitionFrameRate: 50
