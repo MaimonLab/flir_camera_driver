@@ -1,4 +1,4 @@
-# flircam_driver 
+# flir_camera_driver 
 
 This ROS2 package interfaces with the FLIR spinnaker SDK through Pyspin and the simple_pyspin package. 
 
