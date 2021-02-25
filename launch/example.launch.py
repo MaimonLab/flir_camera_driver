@@ -8,13 +8,13 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     config = os.path.join(
-        get_package_share_directory("flircam_driver"),
+        get_package_share_directory("flir_camera_driver"),
         "config",
         "example_config.yaml",
     )
 
     camera1 = Node(
-        package="flircam_driver",
+        package="flir_camera_driver",
         name="camera1",
         executable="publish_camera",
         parameters=[config],
@@ -22,7 +22,7 @@ def generate_launch_description():
     ld.add_action(camera1)
 
     # camera2 = Node(
-    #     package="flircam_driver",
+    #     package="flir_camera_driver",
     #     name="camera2",
     #     executable="publish_pyspin",
     #     parameters=[config],

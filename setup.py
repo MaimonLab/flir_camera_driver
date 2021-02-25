@@ -3,7 +3,7 @@ from setuptools import setup
 import os
 import glob
 
-package_name = "flircam_driver"
+package_name = "flir_camera_driver"
 
 setup(
     name=package_name,
@@ -24,8 +24,8 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "publish_camera = flircam_driver.publish_pyspin_simple:main",
-            "publish_pyspin = flircam_driver.publish_pyspin:main",
+            "publish_camera = flir_camera_driver.publish_pyspin_simple:main",
+            "publish_pyspin = flir_camera_driver.publish_pyspin:main",
         ],
     },
 )
