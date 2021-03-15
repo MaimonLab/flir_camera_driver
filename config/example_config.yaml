@@ -5,7 +5,7 @@ camera1:
     # cam_id: "18421586"
     # cam_id: "18497067"
     reset_camera_settings: True
-    camera_topic: "camera/rig1_ball/image_mono"
+    image_topic: "camera/rig1_ball/image_mono"
     latency_topic: "camera/rig1_ball/latency"
     publish_grayscale: True
     publish_color: False
@@ -37,7 +37,7 @@ camera2:
     reset_camera_settings: True
     # cam_id: "20400128"
     cam_id: "18518215"
-    camera_topic: "camera/rig2_ball/image"
+    image_topic: "camera/rig2_ball/image"
     publish_grayscale: True
     publish_color: False
     camera_settings:

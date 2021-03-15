@@ -24,7 +24,7 @@ class SpinnakerCameraNode(Node):
         default_param = {
             "config_found": False,
             "cam_id": None,
-            "camera_topic": "/camera/camera_x/image",
+            "image_topic": "/camera/camera_x/image",
             "reset_camera_settings": False,
             "publish_latency": True,
             "latency_topic": "camera/rigX/latency",
@@ -42,7 +42,7 @@ class SpinnakerCameraNode(Node):
         self.cam_id = self.get_parameter("cam_id").value
         self.get_logger().info(f"cam_id: {self.cam_id}")
 
-        self.camera_topic = self.get_parameter("camera_topic").value
+        self.image_topic = self.get_parameter("image_topic").value
 
         # Call method that sets camera properties
         self.set_camera_settings()
@@ -62,7 +62,7 @@ class SpinnakerCameraNode(Node):
             self.pub_latency = self.create_publisher(Latency, latency_topic, 10)
 
         # setup image publisher
-        self.pub_stream = self.create_publisher(Image, self.camera_topic, 1)
+        self.pub_stream = self.create_publisher(Image, self.image_topic, 1)
         self.bridge = CvBridge()
         self.get_logger().info("Node initialized")
 
