@@ -42,6 +42,12 @@ class SpinnakerCameraNode(Node):
         self.cam_id = self.get_parameter("cam_id").value
         self.get_logger().info(f"cam_id: {self.cam_id}")
 
+        # latency publisher
+        self.publish_latency = self.get_parameter("publish_latency").value
+        latency_topic = self.get_parameter("latency_topic").value
+        if self.publish_latency:
+            self.pub_latency = self.create_publisher(Latency, latency_topic, 1)
+
         self.image_topic = self.get_parameter("image_topic").value
 
         # Call method that sets camera properties
@@ -53,13 +59,7 @@ class SpinnakerCameraNode(Node):
         self.latch_timing_offset()
         # setup parameters to periodically update latch period
         self.last_latch_time = time.time()
-        self.latch_timer_period = 3600
-
-        # publish_latency
-        self.publish_latency = self.get_parameter("publish_latency").value
-        latency_topic = self.get_parameter("latency_topic").value
-        if self.publish_latency:
-            self.pub_latency = self.create_publisher(Latency, latency_topic, 10)
+        self.latch_timer_period = 300
 
         # setup image publisher
         self.pub_stream = self.create_publisher(Image, self.image_topic, 1)
@@ -71,7 +71,7 @@ class SpinnakerCameraNode(Node):
         time_nanosec = self.get_clock().now().nanoseconds
         timestamp = self.cam.cam.Timestamp.GetValue()
         self.offset_nanosec = time_nanosec - timestamp
-        self.get_logger().info(f"Latched timing offset: {self.offset_nanosec}")
+        # self.get_logger().info(f"Latched timing offset: {self.offset_nanosec}")
 
     def set_camera_settings(self):
         if self.cam_id is None:
