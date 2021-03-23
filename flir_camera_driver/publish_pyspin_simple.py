@@ -4,8 +4,6 @@ import rclpy
 from rclpy.node import Node
 from simple_pyspin import Camera
 from sensor_msgs.msg import Image
-
-# from fic_trac.msg import Latency
 from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
@@ -25,16 +23,14 @@ class SpinnakerCameraNode(Node):
         default_param = {
             "config_found": False,
             "cam_id": None,
-            "image_topic": "/camera/camera_x/image",
+            "image_topic": "/camera/default_rig/image",
             "reset_camera_settings": False,
-            "publish_latency": True,
-            "latency_topic": "camera/rigX/latency",
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
                 self.declare_parameter(key, value)
 
-        # config found parameter is just a check that a config_found parameter was set to true.
+        # config found parameter is just a check that a config_fokund parameter was set to true.
         # This checks for the common naming error, where the name of the node in the launch file and the name of the node in the config file are different
         self.get_logger().info(
             f"Config found: {self.get_parameter('config_found').value}"
@@ -42,12 +38,6 @@ class SpinnakerCameraNode(Node):
 
         self.cam_id = self.get_parameter("cam_id").value
         self.get_logger().info(f"cam_id: {self.cam_id}")
-
-        # latency publisher
-        # self.publish_latency = self.get_parameter("publish_latency").value
-        # latency_topic = self.get_parameter("latency_topic").value
-        # if self.publish_latency:
-        #     self.pub_latency = self.create_publisher(Latency, latency_topic, 1)
 
         self.image_topic = self.get_parameter("image_topic").value
 
@@ -72,7 +62,6 @@ class SpinnakerCameraNode(Node):
         time_nanosec = self.get_clock().now().nanoseconds
         timestamp = self.cam.cam.Timestamp.GetValue()
         self.offset_nanosec = time_nanosec - timestamp
-        # self.get_logger().info(f"Latched timing offset: {self.offset_nanosec}")
 
     def set_camera_settings(self):
         if self.cam_id is None:
@@ -150,14 +139,6 @@ class SpinnakerCameraNode(Node):
         img_msg.header.stamp.nanosec = nsecs
         img_msg.header.frame_id = str(frame_id)
         self.pub_stream.publish(img_msg)
-
-        # if self.publish_latency:
-        #     latency_msg = Latency()
-        #     latency_msg.header = img_msg.header
-        #     current_timestamp = self.get_clock().now().nanoseconds
-        #     latency = np.float(current_timestamp - timestamp)
-        #     latency_msg.latency_ms = (latency) / 1e6
-        #     self.pub_latency.publish(latency_msg)
 
         if (time.time() - self.last_latch_time) > self.latch_timer_period:
             self.latch_timing_offset()

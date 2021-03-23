@@ -25,7 +25,6 @@ setup(
     entry_points={
         "console_scripts": [
             "publish_camera = flir_camera_driver.publish_pyspin_simple:main",
-            "publish_pyspin = flir_camera_driver.publish_pyspin:main",
         ],
     },
 )

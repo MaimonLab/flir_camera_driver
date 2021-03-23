@@ -21,14 +21,6 @@ def generate_launch_description():
     )
     ld.add_action(camera1)
 
-    # camera2 = Node(
-    #     package="flir_camera_driver",
-    #     name="camera2",
-    #     executable="publish_pyspin",
-    #     parameters=[config],
-    # )
-    # ld.add_action(camera2)
-
     rqt_viewer = Node(
         package="rqt_image_view",
         name="image_preview",
