@@ -4,7 +4,8 @@ import rclpy
 from rclpy.node import Node
 from simple_pyspin import Camera
 from sensor_msgs.msg import Image
-from fic_trac.msg import Latency
+
+# from fic_trac.msg import Latency
 from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
@@ -43,10 +44,10 @@ class SpinnakerCameraNode(Node):
         self.get_logger().info(f"cam_id: {self.cam_id}")
 
         # latency publisher
-        self.publish_latency = self.get_parameter("publish_latency").value
-        latency_topic = self.get_parameter("latency_topic").value
-        if self.publish_latency:
-            self.pub_latency = self.create_publisher(Latency, latency_topic, 1)
+        # self.publish_latency = self.get_parameter("publish_latency").value
+        # latency_topic = self.get_parameter("latency_topic").value
+        # if self.publish_latency:
+        #     self.pub_latency = self.create_publisher(Latency, latency_topic, 1)
 
         self.image_topic = self.get_parameter("image_topic").value
 
@@ -150,13 +151,13 @@ class SpinnakerCameraNode(Node):
         img_msg.header.frame_id = str(frame_id)
         self.pub_stream.publish(img_msg)
 
-        if self.publish_latency:
-            latency_msg = Latency()
-            latency_msg.header = img_msg.header
-            current_timestamp = self.get_clock().now().nanoseconds
-            latency = np.float(current_timestamp - timestamp)
-            latency_msg.latency_ms = (latency) / 1e6
-            self.pub_latency.publish(latency_msg)
+        # if self.publish_latency:
+        #     latency_msg = Latency()
+        #     latency_msg.header = img_msg.header
+        #     current_timestamp = self.get_clock().now().nanoseconds
+        #     latency = np.float(current_timestamp - timestamp)
+        #     latency_msg.latency_ms = (latency) / 1e6
+        #     self.pub_latency.publish(latency_msg)
 
         if (time.time() - self.last_latch_time) > self.latch_timer_period:
             self.latch_timing_offset()

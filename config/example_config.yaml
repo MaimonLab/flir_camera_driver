@@ -1,7 +1,8 @@
 camera1:
   ros__parameters:
     config_found: True
-    cam_id: "18518215"
+    cam_id: "18518181"
+    # cam_id: "18518215"
     # cam_id: "18421586"
     # cam_id: "18497067"
     reset_camera_settings: True
