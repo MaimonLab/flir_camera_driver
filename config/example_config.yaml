@@ -1,17 +1,12 @@
-camera1:
+camera_default:
   ros__parameters:
     config_found: True
-    cam_id: "18518181"
-    # cam_id: "18518215"
-    # cam_id: "18421586"
-    # cam_id: "18497067"
-    reset_camera_settings: True
-    image_topic: "camera/rig1_ball/image_mono"
-    latency_topic: "camera/rig1_ball/latency"
+    cam_id: '18518215'
+    image_topic: "camera/image_mono"
+    latency_topic: "camera/latency"
     publish_grayscale: True
     publish_color: False
     camera_settings:
-      # AutoFunctionAOIsControl: "On" # not sure what this setting does
       TriggerMode: "Off"
       GainAuto: "Continuous"
       AcquisitionFrameRateAuto: "Off"
@@ -22,8 +17,6 @@ camera1:
       LineSource: "ExposureActive"
       LineInverter: True
       AutoFunctionAOIsControl: "On"
-      # Width: 512
-      # Height: 512
     camera_chunkdata:
       FrameCounter:
         ChunkEnable: True
@@ -31,30 +24,24 @@ camera1:
       Timestamp:
         ChunkEnable: True
         ChunkModeActive: True
-camera2:
+camera_test_off:
   ros__parameters:
     config_found: True
-    # cam_id: "18318588"
-    reset_camera_settings: True
-    # cam_id: "20400128"
-    cam_id: "18518215"
-    image_topic: "camera/rig2_ball/image"
+    image_topic: "camera/image_mono"
+    latency_topic: "camera/latency"
     publish_grayscale: True
     publish_color: False
     camera_settings:
-      TriggerMode: 0
-      GainAuto: 0
-      # AcquisitionFrameRateEnable: 0
-      AcquisitionFrameRate: 120.0 # max around 400, image does get dark
-      # LineSelector: "Line3" # PySpin.LineSelector_Line3
-      # LineMode: "Output"
-      # LineSource: "ExposureActive"
-      # LineInverter: True
-      BinningVertical: 2 #automatically bins horizontal as well
-      Width: 400
-      Height: 368
-      OffsetX: 160
-      OffsetY: 0
+      TriggerMode: Off
+      GainAuto: Off
+      AcquisitionFrameRateAuto: Off
+      AcquisitionFrameRateEnabled: True
+      AcquisitionFrameRate: 50
+      LineSelector: "Line3" # PySpin.LineSelector_Line3
+      LineMode: "Output"
+      LineSource: "ExposureActive"
+      LineInverter: True
+      AutoFunctionAOIsControl: On
     camera_chunkdata:
       FrameCounter:
         ChunkEnable: True
@@ -62,3 +49,11 @@ camera2:
       Timestamp:
         ChunkEnable: True
         ChunkModeActive: True
+camera_test_id:
+  ros__parameters:
+    config_found: True
+    image_topic: "camera/image_mono"
+    latency_topic: "camera/latency"
+    cam_id: 18518215
+    publish_grayscale: True
+    publish_color: True

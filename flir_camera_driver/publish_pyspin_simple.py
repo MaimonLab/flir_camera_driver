@@ -53,7 +53,7 @@ class SpinnakerCameraNode(Node):
         self.latch_timer_period = 300
 
         # setup image publisher
-        self.pub_stream = self.create_publisher(Image, self.image_topic, 1)
+        self.pub_stream = self.create_publisher(Image, self.image_topic, 10)
         self.bridge = CvBridge()
         self.get_logger().info("Node initialized")
 
@@ -66,7 +66,13 @@ class SpinnakerCameraNode(Node):
     def set_camera_settings(self):
         if self.cam_id is None:
             self.cam = Camera()
+
         else:
+            # Cameras can be initialized by index or by id.
+            # If a large int, it most likely means an id, which is of a string format
+            # note that leading zeros in cam id of type int would result in bugs that can only be solved before yaml is produced
+            if (type(self.cam_id) == int) and (self.cam_id > 10):
+                self.cam_id = f"{self.cam_id}"
             self.cam = Camera(self.cam_id)
         try:
             self.cam.init()
@@ -96,8 +102,23 @@ class SpinnakerCameraNode(Node):
                 f"camera_settings.{param_name}"
             ).value
 
+        cam_dict["TriggerMode"] = "Off"
+        cam_dict["GainAuto"] = False
+
         # set camera settings
         for attribute_name, attribute_value in cam_dict.items():
+            self.get_logger().info(f"   {attribute_name}: {attribute_value}")
+
+            if attribute_name in [
+                "TriggerMode",
+                "GainAuto",
+                "AutoFunctionAOIsControl",
+                "AcquisitionFrameRateAuto",
+            ]:
+                if attribute_value == False:
+                    attribute_value = "Off"
+                elif attribute_value == True:
+                    attribute_value = "On"
             setattr(self.cam, attribute_name, attribute_value)
 
         # get chunk settings

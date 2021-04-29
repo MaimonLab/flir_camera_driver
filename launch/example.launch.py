@@ -15,7 +15,9 @@ def generate_launch_description():
 
     camera1 = Node(
         package="flir_camera_driver",
-        name="camera1",
+        # name="camera_default",
+        # name="camera_test_off",
+        name="camera_test_id",
         executable="publish_camera",
         parameters=[config],
     )
@@ -25,7 +27,7 @@ def generate_launch_description():
         package="rqt_image_view",
         name="image_preview",
         executable="rqt_image_view",
-        arguments=["/camera/rig1_ball/image_mono"],
+        arguments=["/camera/image_mono"],
     )
     ld.add_action(rqt_viewer)
 
