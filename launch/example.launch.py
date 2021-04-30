@@ -16,8 +16,8 @@ def generate_launch_description():
     camera1 = Node(
         package="flir_camera_driver",
         # name="camera_default",
-        # name="camera_test_off",
-        name="camera_test_id",
+        name="camera_test_off",
+        # name="camera_test_id",
         executable="publish_camera",
         parameters=[config],
     )

@@ -66,6 +66,7 @@ class SpinnakerCameraNode(Node):
     def set_camera_settings(self):
         if self.cam_id is None:
             self.cam = Camera()
+            # breakpoint()
 
         else:
             # Cameras can be initialized by index or by id.
@@ -109,6 +110,8 @@ class SpinnakerCameraNode(Node):
         for attribute_name, attribute_value in cam_dict.items():
             self.get_logger().info(f"   {attribute_name}: {attribute_value}")
 
+            # breakpoint()
+            # it would be better to see if attribute should be string,
             if attribute_name in [
                 "TriggerMode",
                 "GainAuto",
@@ -119,7 +122,13 @@ class SpinnakerCameraNode(Node):
                     attribute_value = "Off"
                 elif attribute_value == True:
                     attribute_value = "On"
-            setattr(self.cam, attribute_name, attribute_value)
+
+            try:
+                setattr(self.cam, attribute_name, attribute_value)
+            except:
+                self.get_logger().warn(
+                    f"Error setting {attribute_name}: {attribute_value}, skipping"
+                )
 
         # get chunk settings
         chunk_params = self.get_parameters_by_prefix("camera_chunkdata")
@@ -143,7 +152,7 @@ class SpinnakerCameraNode(Node):
             for chunkswitch, chunkbool in chunkswitches.items():
                 setattr(self.cam, chunkswitch, chunkbool)
 
-        self.get_logger().info(f"Camera settings successful")
+        # self.get_logger().debug(f"Camera settings successful")
 
     def stream_camera(self):
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)
