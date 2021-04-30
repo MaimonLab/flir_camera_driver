@@ -30,12 +30,6 @@ class SpinnakerCameraNode(Node):
             if not self.has_parameter(key):
                 self.declare_parameter(key, value)
 
-        # config found parameter is just a check that a config_fokund parameter was set to true.
-        # This checks for the common naming error, where the name of the node in the launch file and the name of the node in the config file are different
-        self.get_logger().info(
-            f"Config found: {self.get_parameter('config_found').value}"
-        )
-
         self.cam_id = self.get_parameter("cam_id").value
         self.get_logger().info(f"cam_id: {self.cam_id}")
 
@@ -55,7 +49,6 @@ class SpinnakerCameraNode(Node):
         # setup image publisher
         self.pub_stream = self.create_publisher(Image, self.image_topic, 10)
         self.bridge = CvBridge()
-        self.get_logger().info("Node initialized")
 
     def latch_timing_offset(self):
         self.cam.cam.TimestampLatch.Execute()
@@ -66,8 +59,6 @@ class SpinnakerCameraNode(Node):
     def set_camera_settings(self):
         if self.cam_id is None:
             self.cam = Camera()
-            # breakpoint()
-
         else:
             # Cameras can be initialized by index or by id.
             # If a large int, it most likely means an id, which is of a string format
@@ -91,6 +82,7 @@ class SpinnakerCameraNode(Node):
                 self.cam = Camera()
             else:
                 self.cam = Camera(self.cam_id)
+            self.get_logger().info("Camera restarted")
 
         self.cam.init()
         self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
@@ -103,15 +95,31 @@ class SpinnakerCameraNode(Node):
                 f"camera_settings.{param_name}"
             ).value
 
-        cam_dict["TriggerMode"] = "Off"
-        cam_dict["GainAuto"] = False
+        # force camera dictionary in the following order
+        # out of order setting of parameters can result in error
+        # e.g. AcquisitionFrameRatesetting before it is enabled
+        camera_setting_order = [
+            "TriggerMode",
+            "GainAuto",
+            "AcquisitionFrameRateAuto",
+            "AcquisitionFrameRateEnabled",
+            "AcquisitionFrameRate",
+            "LineSelector",
+            "LineMode",
+            "LineSource",
+            "LineInverter",
+            "AutoFunctionAOIsControl",
+        ]
+        sorted_cam_dict = {}
+        for item in camera_setting_order:
+            if item in list(cam_dict):
+                sorted_cam_dict[item] = cam_dict[item]
 
         # set camera settings
-        for attribute_name, attribute_value in cam_dict.items():
-            self.get_logger().info(f"   {attribute_name}: {attribute_value}")
+        for attribute_name, attribute_value in sorted_cam_dict.items():
+            # self.get_logger().info(f"   {attribute_name}: {attribute_value}")
 
-            # breakpoint()
-            # it would be better to see if attribute should be string,
+            # it would be better to see if attribute should be string, by inspecting expected variable type
             if attribute_name in [
                 "TriggerMode",
                 "GainAuto",
@@ -151,8 +159,6 @@ class SpinnakerCameraNode(Node):
             setattr(self.cam, "ChunkSelector", chunkselector)
             for chunkswitch, chunkbool in chunkswitches.items():
                 setattr(self.cam, chunkswitch, chunkbool)
-
-        # self.get_logger().debug(f"Camera settings successful")
 
     def stream_camera(self):
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)

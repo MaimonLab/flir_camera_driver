@@ -6,6 +6,7 @@ camera_default:
     latency_topic: "camera/latency"
     publish_grayscale: True
     publish_color: False
+    reset_camera_settings: False
     camera_settings:
       TriggerMode: "Off"
       GainAuto: "Continuous"
