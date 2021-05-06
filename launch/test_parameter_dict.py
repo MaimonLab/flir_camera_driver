@@ -3,6 +3,11 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import os
 
+import ruamel.yaml
+
+ruamel_yaml = ruamel.yaml.YAML(typ="safe")
+ruamel_yaml.default_flow_style = False
+
 
 def generate_launch_description():
     ld = LaunchDescription()
@@ -13,13 +18,16 @@ def generate_launch_description():
         "example_config.yaml",
     )
 
+    with open(config, "r") as yaml_file:
+        standard_config = ruamel_yaml.load(yaml_file)
+
+    cam_config = standard_config["camera_default"]["ros__parameters"]
+
     camera1 = Node(
         package="flir_camera_driver",
-        # name="camera_default",
-        name="camera_test_off",
-        # name="camera_test_id",
+        name="camera_default",
         executable="publish_camera",
-        parameters=[config],
+        parameters=[cam_config],
     )
     ld.add_action(camera1)
 
