@@ -69,7 +69,11 @@ class SpinnakerCameraNode(Node):
         try:
             self.cam.init()
         except:
-            self.get_logger().error(f"Could not open camera with id {self.cam_id}")
+            self.get_logger().error(
+                f"Failed to open Camera: {self.cam_id}, is it already opened, or not plugged in? Closing Node."
+            )
+            self.destroy_node()
+            exit()
 
         # Camera Reset
         # The camera will actually turn off and on, resetting all parameters to the default
