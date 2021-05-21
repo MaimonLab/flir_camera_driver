@@ -105,6 +105,7 @@ class SpinnakerCameraNode(Node):
         camera_setting_order = [
             "TriggerMode",
             "GainAuto",
+            "Gain",
             "AcquisitionFrameRateAuto",
             "AcquisitionFrameRateEnabled",
             "AcquisitionFrameRate",
@@ -113,6 +114,9 @@ class SpinnakerCameraNode(Node):
             "LineSource",
             "LineInverter",
             "AutoFunctionAOIsControl",
+            "BinningVertical",
+            "ExposureAuto",
+            "Exposure"
         ]
         sorted_cam_dict = {}
         for item in camera_setting_order:
