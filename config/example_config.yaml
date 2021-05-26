@@ -2,7 +2,7 @@ camera_default:
   ros__parameters:
     config_found: True
     # cam_id: '18518215'
-    cam_id: '18518216'
+    # cam_id: '18518216'
     image_topic: "camera/image_mono"
     latency_topic: "camera/latency"
     publish_grayscale: True
@@ -19,6 +19,7 @@ camera_default:
       LineSource: "ExposureActive"
       LineInverter: True
       AutoFunctionAOIsControl: "On"
+      BinningVertical: 2
     camera_chunkdata:
       FrameCounter:
         ChunkEnable: True

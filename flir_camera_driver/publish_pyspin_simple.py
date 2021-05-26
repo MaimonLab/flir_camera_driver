@@ -11,6 +11,22 @@ import time
 
 yaml = YAML(typ="safe")
 
+CAMERA_PRIORITY_SET_ORDER = [
+    "TriggerMode",
+    "GainAuto",
+    "Gain",
+    "AcquisitionFrameRateAuto",
+    "AcquisitionFrameRateEnabled",
+    "AcquisitionFrameRate",
+    "LineSelector",
+    "LineMode",
+    "LineSource",
+    "LineInverter",
+    "BinningVertical",
+    "ExposureAuto",
+    "Exposure",
+]
+
 
 class SpinnakerCameraNode(Node):
     def __init__(self):
@@ -102,30 +118,21 @@ class SpinnakerCameraNode(Node):
         # force camera dictionary in the following order
         # out of order setting of parameters can result in error
         # e.g. AcquisitionFrameRatesetting before it is enabled
-        camera_setting_order = [
-            "TriggerMode",
-            "GainAuto",
-            "Gain",
-            "AcquisitionFrameRateAuto",
-            "AcquisitionFrameRateEnabled",
-            "AcquisitionFrameRate",
-            "LineSelector",
-            "LineMode",
-            "LineSource",
-            "LineInverter",
-            "AutoFunctionAOIsControl",
-            "BinningVertical",
-            "ExposureAuto",
-            "Exposure"
-        ]
-        sorted_cam_dict = {}
-        for item in camera_setting_order:
+        priority_cam_dict = {}
+        for item in CAMERA_PRIORITY_SET_ORDER:
             if item in list(cam_dict):
-                sorted_cam_dict[item] = cam_dict[item]
+                priority_cam_dict[item] = cam_dict[item]
+
+        unset_cam_dict = {}
+        for param_name, param_value in cam_dict.items():
+            if param_name not in CAMERA_PRIORITY_SET_ORDER:
+                unset_cam_dict[param_name] = param_value
+
+        # merge priority camera dict and unset cam dict
+        ordered_cam_dict = {**priority_cam_dict, **unset_cam_dict}
 
         # set camera settings
-        for attribute_name, attribute_value in sorted_cam_dict.items():
-            # self.get_logger().info(f"   {attribute_name}: {attribute_value}")
+        for attribute_name, attribute_value in ordered_cam_dict.items():
 
             # it would be better to see if attribute should be string, by inspecting expected variable type
             if attribute_name in [
