@@ -8,6 +8,7 @@ from cv_bridge import CvBridge
 import numpy as np
 from ruamel.yaml import YAML
 import time
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 
 yaml = YAML(typ="safe")
 
@@ -41,6 +42,7 @@ class SpinnakerCameraNode(Node):
             "cam_id": None,
             "image_topic": "/camera/default_rig/image",
             "reset_camera_settings": False,
+            "latch_timing_interval_s": 60,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -60,10 +62,14 @@ class SpinnakerCameraNode(Node):
         self.latch_timing_offset()
         # setup parameters to periodically update latch period
         self.last_latch_time = time.time()
-        self.latch_timer_period = 300
+        self.latch_timer_period = self.get_parameter("latch_timing_interval_s").value
 
         # setup image publisher
-        self.pub_stream = self.create_publisher(Image, self.image_topic, 10)
+        self.pub_stream = self.create_publisher(
+            Image,
+            self.image_topic,
+            QoSProfile(depth=1, reliability=QoSReliabilityPolicy.RELIABLE),
+        )
         self.bridge = CvBridge()
 
     def latch_timing_offset(self):
