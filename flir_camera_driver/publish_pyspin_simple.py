@@ -9,6 +9,7 @@ import numpy as np
 from ruamel.yaml import YAML
 import time
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy
+import sys
 
 yaml = YAML(typ="safe")
 
@@ -56,7 +57,14 @@ class SpinnakerCameraNode(Node):
         # Call method that sets camera properties
         self.set_camera_settings()
 
-        self.cam.start()
+        try:
+            self.cam.start()
+        except BaseException:
+            self.get_logger().error(f"error: {sys.exc_info()}")
+            raise Exception
+            # rclpy.shutdown()
+            return
+        # exit()
 
         # latch a timestamp to find the offset betweem computer and camera clock
         self.latch_timing_offset()
@@ -209,11 +217,24 @@ class SpinnakerCameraNode(Node):
 
 def main(args=None):
     rclpy.init()
-    camera_node = SpinnakerCameraNode()
-    rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
-    while rclpy.ok():
-        camera_node.stream_camera()
-    rclpy.shutdown()
+    try:
+        camera_node = SpinnakerCameraNode()
+        rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
+    except:
+        # camera_node.get_logger().error(f"Exception in camera init {sys.exc_info()}")
+        # camera_node.get_logger().info(f"shutting down ")
+        rclpy.shutdown()
+        return
+
+    try:
+        while rclpy.ok():
+            camera_node.stream_camera()
+    except KeyboardInterrupt:
+        pass
+    except BaseException:
+        camera_node.get_logger().error(f"Exception in camera node: {sys.exc_info()}")
+    finally:
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":
