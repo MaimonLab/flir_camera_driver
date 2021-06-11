@@ -2,10 +2,13 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>flir_camera_driver</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="tlmohren@gmail.com">maimon</maintainer>
-  <license>TODO: License declaration</license>
+  <version>0.1.0</version>
+  <description>
+    ROS2 package to publish images from FLIR cameras. 
+    Depends on FLIR's Spinnaker and Pyspin, as well as the simple-pyspin package.
+  </description>
+  <maintainer email="tlmohren@gmail.com">tlmohren</maintainer>
+  <license>LGPLv3</license>
 
   <depend>rlcpy</depend>
 

@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
 
+""" 
+publish_pyspin_simple.py
+
+This node opens a FLIR camera through pyspin and publishes that to the topic specified in the config. 
+In the initialization function you can set camera parameters, though this part is fragile. 
+The list CAMERA_PRIORITY_SET_ORDER contains an order of parameters and will be used to sort incoming parameters accoridng to this list. 
+Any camera setting not in this list will be set after these parameters are set. 
+
+The camera can come with pre-set parameters. 
+To ensure you start with a blank camera state, you can pass the parameter reset_camera_settings. 
+This will reboot the camera, and turn all settings into the default values. 
+This does take ~5 seconds, but especially when testing new parameter configurations I recommend setting it to True. 
+-TLM 
+"""
+
 import rclpy
 from rclpy.node import Node
 from simple_pyspin import Camera
@@ -9,6 +24,9 @@ import numpy as np
 from ruamel.yaml import YAML
 import time
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy
+import sys
+import datetime
+import cv2
 
 yaml = YAML(typ="safe")
 
@@ -40,13 +58,16 @@ class SpinnakerCameraNode(Node):
         default_param = {
             "config_found": False,
             "cam_id": None,
-            "image_topic": "/camera/default_rig/image",
+            "image_topic": "/camera/image",
             "reset_camera_settings": False,
-            "latch_timing_interval_s": 60,
+            "latch_timing_interval_s": 5,
+            "add_timestamp": False,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
                 self.declare_parameter(key, value)
+
+        self.add_timestamp = self.get_parameter("add_timestamp").value
 
         self.cam_id = self.get_parameter("cam_id").value
         self.get_logger().info(f"cam_id: {self.cam_id}")
@@ -56,10 +77,15 @@ class SpinnakerCameraNode(Node):
         # Call method that sets camera properties
         self.set_camera_settings()
 
-        self.cam.start()
+        try:
+            self.cam.start()
+        except BaseException:
+            self.get_logger().error(f"error: {sys.exc_info()}")
+            raise Exception
 
         # latch a timestamp to find the offset betweem computer and camera clock
         self.latch_timing_offset()
+
         # setup parameters to periodically update latch period
         self.last_latch_time = time.time()
         self.latch_timer_period = self.get_parameter("latch_timing_interval_s").value
@@ -184,6 +210,20 @@ class SpinnakerCameraNode(Node):
     def stream_camera(self):
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)
 
+        if self.add_timestamp:
+            height = len(img_cv)
+            datetime_str = datetime.datetime.now().strftime("%y/%m/%d %H:%M:%S")
+            cv2.rectangle(img_cv, (0, height - 17), (165, height), 0, -1)
+            cv2.putText(
+                img_cv,
+                datetime_str,
+                (0, height - 5),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                1,
+            )
+
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
 
         timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
@@ -209,11 +249,22 @@ class SpinnakerCameraNode(Node):
 
 def main(args=None):
     rclpy.init()
-    camera_node = SpinnakerCameraNode()
-    rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
-    while rclpy.ok():
-        camera_node.stream_camera()
-    rclpy.shutdown()
+    try:
+        camera_node = SpinnakerCameraNode()
+        rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
+    except:
+        rclpy.shutdown()
+        return
+
+    try:
+        while rclpy.ok():
+            camera_node.stream_camera()
+    except KeyboardInterrupt:
+        pass
+    except BaseException:
+        camera_node.get_logger().error(f"Exception in camera node: {sys.exc_info()}")
+    finally:
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":
