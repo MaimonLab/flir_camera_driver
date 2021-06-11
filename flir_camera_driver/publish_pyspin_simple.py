@@ -46,7 +46,7 @@ class SpinnakerCameraNode(Node):
             "image_topic": "/camera/default_rig/image",
             "reset_camera_settings": False,
             "latch_timing_interval_s": 60,
-            "add_timestamp": False,
+            "add_timestamp": True,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -200,15 +200,16 @@ class SpinnakerCameraNode(Node):
         if self.add_timestamp:
             height = len(img_cv)
             datetime_str = datetime.datetime.now().strftime("%y/%m/%d %H:%M:%S")
-            cv2.rectangle(img_cv, (0, height - 35), (320, height), 0, -1)
+            cv2.rectangle(img_cv, (0, height - 17), (165, height), 0, -1)
             cv2.putText(
                 img_cv,
                 datetime_str,
-                (5, height - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
+                (0, height - 5),
+                # cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.FONT_HERSHEY_PLAIN,
                 1,
                 (255, 255, 255),
-                2,
+                1,
             )
 
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
