@@ -50,11 +50,11 @@ def generate_launch_description():
         print(f"Error parsing your input, exiting")
         exit()
 
-    # cam_config = example_config["camera_default"]["ros__parameters"]
+    # cam_config = example_config["basic_example_camera"]["ros__parameters"]
 
     camera1 = Node(
         package="flir_camera_driver",
-        name="camera_default",
+        name="basic_example_camera",
         executable="publish_camera",
         parameters=[cam_config],
     )

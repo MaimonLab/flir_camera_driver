@@ -7,24 +7,21 @@ import os
 def generate_launch_description():
     ld = LaunchDescription()
 
-    config = os.path.join(
-        get_package_share_directory("flir_camera_driver"),
-        "config",
-        "example_config.yaml",
-    )
+    workspace = get_package_share_directory("flir_camera_driver").split("/install")[0]
+    config = f"{workspace}/src/flir_camera_driver/config/example_config.yaml"
 
-    camera1 = Node(
+    flir_camera = Node(
         package="flir_camera_driver",
-        name="camera_default",
         executable="publish_camera",
+        name="basic_example_camera",
         parameters=[config],
     )
-    ld.add_action(camera1)
+    ld.add_action(flir_camera)
 
     rqt_viewer = Node(
         package="rqt_image_view",
-        name="image_preview",
         executable="rqt_image_view",
+        name="image_preview",
         arguments=["/camera/image_mono"],
     )
     ld.add_action(rqt_viewer)

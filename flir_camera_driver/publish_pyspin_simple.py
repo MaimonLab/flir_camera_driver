@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
 
+""" 
+publish_pyspin_simple.py
+
+This node opens a FLIR camera through pyspin and publishes that to the topic specified in the config. 
+In the initialization function you can set camera parameters, though this part is fragile. 
+The list CAMERA_PRIORITY_SET_ORDER contains an order of parameters and will be used to sort incoming parameters accoridng to this list. 
+Any camera setting not in this list will be set after these parameters are set. 
+
+The camera can come with pre-set parameters. 
+To ensure you start with a blank camera state, you can pass the parameter reset_camera_settings. 
+This will reboot the camera, and turn all settings into the default values. 
+This does take ~5 seconds, but especially when testing new parameter configurations I recommend setting it to True. 
+-TLM 
+"""
+
 import rclpy
 from rclpy.node import Node
 from simple_pyspin import Camera
@@ -43,10 +58,10 @@ class SpinnakerCameraNode(Node):
         default_param = {
             "config_found": False,
             "cam_id": None,
-            "image_topic": "/camera/default_rig/image",
+            "image_topic": "/camera/image",
             "reset_camera_settings": False,
-            "latch_timing_interval_s": 60,
-            "add_timestamp": True,
+            "latch_timing_interval_s": 5,
+            "add_timestamp": False,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -67,12 +82,10 @@ class SpinnakerCameraNode(Node):
         except BaseException:
             self.get_logger().error(f"error: {sys.exc_info()}")
             raise Exception
-            # rclpy.shutdown()
-            return
-        # exit()
 
         # latch a timestamp to find the offset betweem computer and camera clock
         self.latch_timing_offset()
+
         # setup parameters to periodically update latch period
         self.last_latch_time = time.time()
         self.latch_timer_period = self.get_parameter("latch_timing_interval_s").value
@@ -205,7 +218,6 @@ class SpinnakerCameraNode(Node):
                 img_cv,
                 datetime_str,
                 (0, height - 5),
-                # cv2.FONT_HERSHEY_SIMPLEX,
                 cv2.FONT_HERSHEY_PLAIN,
                 1,
                 (255, 255, 255),
@@ -241,8 +253,6 @@ def main(args=None):
         camera_node = SpinnakerCameraNode()
         rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
     except:
-        # camera_node.get_logger().error(f"Exception in camera init {sys.exc_info()}")
-        # camera_node.get_logger().info(f"shutting down ")
         rclpy.shutdown()
         return
 

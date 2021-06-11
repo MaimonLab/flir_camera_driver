@@ -1,4 +1,4 @@
-camera_default:
+basic_example_camera:
   ros__parameters:
     config_found: True
     # cam_id: '18518215'
