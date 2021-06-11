@@ -5,6 +5,7 @@ camera_default:
     # cam_id: '18518216'
     image_topic: "camera/image_mono"
     latency_topic: "camera/latency"
+    add_timestamp: True
     publish_grayscale: True
     publish_color: False
     latch_timing_interval_s: 5

@@ -10,6 +10,8 @@ from ruamel.yaml import YAML
 import time
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 import sys
+import datetime
+import cv2
 
 yaml = YAML(typ="safe")
 
@@ -44,10 +46,13 @@ class SpinnakerCameraNode(Node):
             "image_topic": "/camera/default_rig/image",
             "reset_camera_settings": False,
             "latch_timing_interval_s": 60,
+            "add_timestamp": False,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
                 self.declare_parameter(key, value)
+
+        self.add_timestamp = self.get_parameter("add_timestamp").value
 
         self.cam_id = self.get_parameter("cam_id").value
         self.get_logger().info(f"cam_id: {self.cam_id}")
@@ -191,6 +196,20 @@ class SpinnakerCameraNode(Node):
 
     def stream_camera(self):
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)
+
+        if self.add_timestamp:
+            height = len(img_cv)
+            datetime_str = datetime.datetime.now().strftime("%y/%m/%d %H:%M:%S")
+            cv2.rectangle(img_cv, (0, height - 35), (320, height - 10), 0, -1)
+            cv2.putText(
+                img_cv,
+                datetime_str,
+                (5, height - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (255, 255, 255),
+                2,
+            )
 
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
 
