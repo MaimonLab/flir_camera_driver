@@ -200,7 +200,7 @@ class SpinnakerCameraNode(Node):
         if self.add_timestamp:
             height = len(img_cv)
             datetime_str = datetime.datetime.now().strftime("%y/%m/%d %H:%M:%S")
-            cv2.rectangle(img_cv, (0, height - 35), (320, height - 10), 0, -1)
+            cv2.rectangle(img_cv, (0, height - 35), (320, height), 0, -1)
             cv2.putText(
                 img_cv,
                 datetime_str,
