@@ -68,6 +68,7 @@ class SpinnakerCameraNode(Node):
                 self.declare_parameter(key, value)
 
         self.add_timestamp = self.get_parameter("add_timestamp").value
+        self.get_logger().info(f"adding timestamp: {self.add_timestamp}")
 
         self.cam_id = self.get_parameter("cam_id").value
         self.get_logger().info(f"cam_id: {self.cam_id}")
@@ -209,6 +210,8 @@ class SpinnakerCameraNode(Node):
 
     def stream_camera(self):
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)
+        timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
+        frame_id = chunk_data.GetFrameID()
 
         if self.add_timestamp:
             height = len(img_cv)
@@ -223,11 +226,17 @@ class SpinnakerCameraNode(Node):
                 (255, 255, 255),
                 1,
             )
-
+            cv2.rectangle(img_cv, (0, height - 34), (66, height - 17), 0, -1)
+            cv2.putText(
+                img_cv,
+                f"id: {frame_id}",
+                (0, height - 22),
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                1,
+            )
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
-
-        timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
-        frame_id = chunk_data.GetFrameID()
 
         secs = int(timestamp / 1e9)
         nsecs = int(timestamp - secs * 1e9)
