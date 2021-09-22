@@ -1,13 +1,12 @@
 from setuptools import setup
 
-import os
 import glob
 
 package_name = "flir_camera_driver"
 
 setup(
     name=package_name,
-    version="0.0.0",
+    version="0.1.0",
     packages=[package_name],
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
@@ -17,10 +16,13 @@ setup(
     ],
     install_requires=["setuptools"],
     zip_safe=True,
-    maintainer="maimon",
+    maintainer="Thomas Mohren",
     maintainer_email="tlmohren@gmail.com",
-    description="TODO: Package description",
-    license="TODO: License declaration",
+    description=(
+        "Publishes an image stream from a FLIR camera."
+        " Uses the pyspin-simple wrapper around the FLIR pyspin library."
+    ),
+    license="LGPLv3",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [

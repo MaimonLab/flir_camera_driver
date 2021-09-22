@@ -1,8 +1,6 @@
 basic_example_camera:
   ros__parameters:
     config_found: True
-    # cam_id: '18518215'
-    # cam_id: '18518216'
     image_topic: "camera/image_mono"
     latency_topic: "camera/latency"
     add_timestamp: True
@@ -16,7 +14,7 @@ basic_example_camera:
       AcquisitionFrameRateAuto: "Off"
       AcquisitionFrameRateEnabled: True
       AcquisitionFrameRate: 50
-      LineSelector: "Line3" # PySpin.LineSelector_Line3
+      LineSelector: "Line3"
       LineMode: "Output"
       LineSource: "ExposureActive"
       LineInverter: True
@@ -42,7 +40,7 @@ camera_test_off:
       AcquisitionFrameRateAuto: Off
       AcquisitionFrameRateEnabled: True
       AcquisitionFrameRate: 50
-      LineSelector: "Line3" # PySpin.LineSelector_Line3
+      LineSelector: "Line3"
       LineMode: "Output"
       LineSource: "ExposureActive"
       LineInverter: True

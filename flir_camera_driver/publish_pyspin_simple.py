@@ -20,7 +20,6 @@ from rclpy.node import Node
 from simple_pyspin import Camera
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-import numpy as np
 from ruamel.yaml import YAML
 import time
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy
