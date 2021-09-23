@@ -1,6 +1,5 @@
 basic_example_camera:
   ros__parameters:
-    config_found: True
     image_topic: "camera/image_mono"
     latency_topic: "camera/latency"
     add_timestamp: True
@@ -14,11 +13,6 @@ basic_example_camera:
       AcquisitionFrameRateAuto: "Off"
       AcquisitionFrameRateEnabled: True
       AcquisitionFrameRate: 50
-      LineSelector: "Line3"
-      LineMode: "Output"
-      LineSource: "ExposureActive"
-      LineInverter: True
-      AutoFunctionAOIsControl: "On"
       BinningVertical: 2
     camera_chunkdata:
       FrameCounter:
@@ -29,32 +23,17 @@ basic_example_camera:
         ChunkModeActive: True
 camera_test_off:
   ros__parameters:
-    config_found: True
     image_topic: "camera/image_mono"
     latency_topic: "camera/latency"
-    publish_grayscale: True
-    publish_color: False
     camera_settings:
       TriggerMode: Off
       GainAuto: Off
+      Gain: 18
       AcquisitionFrameRateAuto: Off
       AcquisitionFrameRateEnabled: True
-      AcquisitionFrameRate: 50
-      LineSelector: "Line3"
-      LineMode: "Output"
-      LineSource: "ExposureActive"
-      LineInverter: True
-      AutoFunctionAOIsControl: On
-    camera_chunkdata:
-      FrameCounter:
-        ChunkEnable: True
-        ChunkModeActive: True
-      Timestamp:
-        ChunkEnable: True
-        ChunkModeActive: True
+      AcquisitionFrameRate: 100
 camera_test_id:
   ros__parameters:
-    config_found: True
     image_topic: "camera/image_mono"
     latency_topic: "camera/latency"
     cam_id: 18518215

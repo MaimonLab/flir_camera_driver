@@ -49,15 +49,13 @@ CAMERA_PRIORITY_SET_ORDER = [
 class SpinnakerCameraNode(Node):
     def __init__(self):
         super().__init__(
-            "publish_camera",
-            automatically_declare_parameters_from_overrides=True,
+            "publish_camera", automatically_declare_parameters_from_overrides=True
         )
 
         # declare default parameters
         default_param = {
-            "config_found": False,
             "cam_id": None,
-            "image_topic": "/camera/image",
+            "image_topic": "camera/image",
             "reset_camera_settings": False,
             "latch_timing_interval_s": 5,
             "add_timestamp": False,
@@ -105,15 +103,23 @@ class SpinnakerCameraNode(Node):
         self.offset_nanosec = time_nanosec - timestamp
 
     def set_camera_settings(self):
-        if self.cam_id is None:
-            self.cam = Camera()
-        else:
-            # Cameras can be initialized by index or by id.
-            # If a large int, it most likely means an id, which is of a string format
-            # note that leading zeros in cam id of type int would result in bugs that can only be solved before yaml is produced
-            if (type(self.cam_id) == int) and (self.cam_id > 10):
-                self.cam_id = f"{self.cam_id}"
-            self.cam = Camera(self.cam_id)
+        try:
+            if self.cam_id is None:
+                self.cam = Camera()
+            else:
+                # Cameras can be initialized by index or by id.
+                # If a large int, it most likely means an id, which is of a string format
+                # note that leading zeros in cam id of type int would result in bugs that can only be solved before yaml is produced
+                if (type(self.cam_id) == int) and (self.cam_id > 10):
+                    self.cam_id = f"{self.cam_id}"
+                self.cam = Camera(self.cam_id)
+        except:
+            self.get_logger().error(
+                f"Failed to open Camera: {self.cam_id}, is it already opened, or not plugged in? Closing Node."
+            )
+            self.destroy_node()
+            exit()
+
         try:
             self.cam.init()
         except:
@@ -257,12 +263,12 @@ class SpinnakerCameraNode(Node):
 
 def main(args=None):
     rclpy.init()
-    try:
-        camera_node = SpinnakerCameraNode()
-        rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
-    except:
-        rclpy.shutdown()
-        return
+    # try:
+    camera_node = SpinnakerCameraNode()
+    # rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
+    # except:
+    # rclpy.shutdown()
+    # return
 
     try:
         while rclpy.ok():

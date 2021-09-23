@@ -30,7 +30,7 @@ def generate_launch_description():
         option_dict[idx] = node_name
     input_str = input("Select config: ")
     try:
-        print(f"   input: {input_str}, type: {type(input_str)}")
+        # print(f"   input: {input_str}, type: {type(input_str)}")
         if input_str == "":
             input_int = default_idx
         else:
