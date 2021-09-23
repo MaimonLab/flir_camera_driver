@@ -26,6 +26,7 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 import sys
 import datetime
 import cv2
+from contextlib import contextmanager
 
 yaml = YAML(typ="safe")
 
@@ -43,6 +44,13 @@ CAMERA_PRIORITY_SET_ORDER = [
     "BinningVertical",
     "ExposureAuto",
     "Exposure",
+]
+
+PARAMETER_FALSE_MEANS_OFF = [
+    "TriggerMode",
+    "GainAuto",
+    "AutoFunctionAOIsControl",
+    "AcquisitionFrameRateAuto",
 ]
 
 
@@ -65,11 +73,8 @@ class SpinnakerCameraNode(Node):
                 self.declare_parameter(key, value)
 
         self.add_timestamp = self.get_parameter("add_timestamp").value
-        self.get_logger().info(f"adding timestamp: {self.add_timestamp}")
 
         self.cam_id = self.get_parameter("cam_id").value
-        self.get_logger().info(f"cam_id: {self.cam_id}")
-
         self.image_topic = self.get_parameter("image_topic").value
 
         # Call method that sets camera properties
@@ -102,32 +107,42 @@ class SpinnakerCameraNode(Node):
         timestamp = self.cam.cam.Timestamp.GetValue()
         self.offset_nanosec = time_nanosec - timestamp
 
-    def set_camera_settings(self):
+    @contextmanager
+    def error_if_unavailable(self):
         try:
-            if self.cam_id is None:
-                self.cam = Camera()
-            else:
-                # Cameras can be initialized by index or by id.
-                # If a large int, it most likely means an id, which is of a string format
-                # note that leading zeros in cam id of type int would result in bugs that can only be solved before yaml is produced
-                if (type(self.cam_id) == int) and (self.cam_id > 10):
-                    self.cam_id = f"{self.cam_id}"
-                self.cam = Camera(self.cam_id)
+            yield
         except:
-            self.get_logger().error(
-                f"Failed to open Camera: {self.cam_id}, is it already opened, or not plugged in? Closing Node."
-            )
+            if self.cam_id:
+                self.get_logger().error(
+                    f"Failed to open Camera with serial: {self.cam_id}. It might be opened elsewhere or not plugged in. Closing Node."
+                )
+            else:
+                self.get_logger().error(
+                    f"Failed to open any camera: are all cameras already opened, or are none plugged in? Closing Node."
+                )
             self.destroy_node()
             exit()
 
-        try:
+    def set_camera_settings(self):
+        """[]"""
+
+        # parse cam_id
+        # Cameras can be initialized by index or by id.
+        # If a large int, it most likely means an id, which is of a string format
+        # note that leading zeros in cam id of type int would result in bugs that can only be solved before yaml is produced
+        if (type(self.cam_id) == int) and (self.cam_id > 10):
+            self.cam_id = f"{self.cam_id}"
+
+        with self.error_if_unavailable():
+            if self.cam_id is None:
+                self.cam = Camera()
+            else:
+                self.cam = Camera(self.cam_id)
+                self.get_logger().info(f"Opening camera by serial: {self.cam_id}")
+
+        # unsure if this one also needs to be in context manager
+        with self.error_if_unavailable():
             self.cam.init()
-        except:
-            self.get_logger().error(
-                f"Failed to open Camera: {self.cam_id}, is it already opened, or not plugged in? Closing Node."
-            )
-            self.destroy_node()
-            exit()
 
         # Camera Reset
         # The camera will actually turn off and on, resetting all parameters to the default
@@ -143,12 +158,18 @@ class SpinnakerCameraNode(Node):
             self.get_logger().info("Camera restarted")
 
         self.cam.init()
-        self.cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
+
+        # if no cam_id specified in param, log serial of camera opened
+        if self.cam_id is None:
+            acquired_cam_id = self.cam.get_info("DeviceSerialNumber")["value"]
+            self.get_logger().info(
+                f"No serial specified, opened camera has serial: {acquired_cam_id}"
+            )
 
         # get desired camera settings
         parameter_dict = self.get_parameters_by_prefix("camera_settings")
         cam_dict = {}
-        for param_name, param in parameter_dict.items():
+        for param_name, _ in parameter_dict.items():
             cam_dict[param_name] = self.get_parameter(
                 f"camera_settings.{param_name}"
             ).value
@@ -173,12 +194,7 @@ class SpinnakerCameraNode(Node):
         for attribute_name, attribute_value in ordered_cam_dict.items():
 
             # it would be better to see if attribute should be string, by inspecting expected variable type
-            if attribute_name in [
-                "TriggerMode",
-                "GainAuto",
-                "AutoFunctionAOIsControl",
-                "AcquisitionFrameRateAuto",
-            ]:
+            if attribute_name in PARAMETER_FALSE_MEANS_OFF:
                 if attribute_value == False:
                     attribute_value = "Off"
                 elif attribute_value == True:
@@ -188,7 +204,7 @@ class SpinnakerCameraNode(Node):
                 setattr(self.cam, attribute_name, attribute_value)
             except:
                 self.get_logger().warn(
-                    f"Error setting {attribute_name}: {attribute_value}, skipping"
+                    f"Error setting [{attribute_name}: {attribute_value}], skipping"
                 )
 
         # get chunk settings
@@ -213,34 +229,43 @@ class SpinnakerCameraNode(Node):
             for chunkswitch, chunkbool in chunkswitches.items():
                 setattr(self.cam, chunkswitch, chunkbool)
 
+    def burn_timestamp(self, img_cv, frame_id, timestamp):
+        height = len(img_cv)
+
+        # should use timestmap
+        datetime_str = datetime.datetime.fromtimestamp(timestamp / 1e9).strftime(
+            "%y/%m/%d %H:%M:%S"
+        )
+
+        cv2.rectangle(img_cv, (0, height - 17), (165, height), 0, -1)
+        cv2.putText(
+            img_cv,
+            datetime_str,
+            (0, height - 5),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (255, 255, 255),
+            1,
+        )
+        cv2.rectangle(img_cv, (0, height - 34), (66, height - 17), 0, -1)
+        cv2.putText(
+            img_cv,
+            f"id: {frame_id}",
+            (0, height - 22),
+            cv2.FONT_HERSHEY_PLAIN,
+            1,
+            (255, 255, 255),
+            1,
+        )
+
     def stream_camera(self):
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)
         timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
         frame_id = chunk_data.GetFrameID()
 
         if self.add_timestamp:
-            height = len(img_cv)
-            datetime_str = datetime.datetime.now().strftime("%y/%m/%d %H:%M:%S")
-            cv2.rectangle(img_cv, (0, height - 17), (165, height), 0, -1)
-            cv2.putText(
-                img_cv,
-                datetime_str,
-                (0, height - 5),
-                cv2.FONT_HERSHEY_PLAIN,
-                1,
-                (255, 255, 255),
-                1,
-            )
-            cv2.rectangle(img_cv, (0, height - 34), (66, height - 17), 0, -1)
-            cv2.putText(
-                img_cv,
-                f"id: {frame_id}",
-                (0, height - 22),
-                cv2.FONT_HERSHEY_PLAIN,
-                1,
-                (255, 255, 255),
-                1,
-            )
+            self.burn_timestamp(img_cv, frame_id, timestamp)
+
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
 
         secs = int(timestamp / 1e9)
@@ -255,20 +280,10 @@ class SpinnakerCameraNode(Node):
             self.latch_timing_offset()
             self.last_latch_time = time.time()
 
-    def shutdown_hook(self):
-        print("executing shutdown hook")
-        self.get_logger().info("Releasing camera")
-        self.cam.close()  # You should explicitly clean up
 
-
-def main(args=None):
+def main():
     rclpy.init()
-    # try:
     camera_node = SpinnakerCameraNode()
-    # rclpy.get_default_context().on_shutdown(camera_node.shutdown_hook)
-    # except:
-    # rclpy.shutdown()
-    # return
 
     try:
         while rclpy.ok():
@@ -277,8 +292,6 @@ def main(args=None):
         pass
     except BaseException:
         camera_node.get_logger().error(f"Exception in camera node: {sys.exc_info()}")
-    finally:
-        rclpy.shutdown()
 
 
 if __name__ == "__main__":
