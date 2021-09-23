@@ -100,7 +100,7 @@ We'll need to install **Spinnaker**, **spinnaker_python** and **pyspin-simple**.
   **Hacky solution:** To circumvent this unknown settings order the publish_pyspin_simple uses a list of settings named `CAMERA_PRIORITY_SET_ORDER`. The node will first go through this list and set parameters according to this order, before setting parameters not in this list. The `CAMERA_PRIORITY_SET_ORDER` is by no means exhaustive, it merely reflects parameters frequently used in the maimon lab.
 
 - **YAML TYPE CONVERSION** Yaml has the unfortunate property of interpreting Off without quotes as False. Since we need to set the parameter as the string "Off", this will lead to an error if unhandled.
-  **Hacky Solution:** The list `PARAMETER_FALSE_MEANS_OFF` contains parameters that if it detects a false, this will be turned into the string "Off". This list is by no means exhaustive and if you have another parameter with this property you must add it to the list.
+  **Hacky Solution:** In case the setter experiences a type error, it will look up in the BOOLEAN_STRING_DICT to turn True to "On" and False to "Off" and retry.
 
 **What parameters are available?** The simple_pyspin package comes with [example scripts](https://klecknerlab.github.io/simple_pyspin/) and a [list of settings for the Chameleon cameras](https://klecknerlab.github.io/simple_pyspin/cameras/Point_Grey_Research_Chameleon3_CM3-U3-13Y3M.html).
 

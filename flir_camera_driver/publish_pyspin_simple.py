@@ -46,12 +46,14 @@ CAMERA_PRIORITY_SET_ORDER = [
     "Exposure",
 ]
 
-PARAMETER_FALSE_MEANS_OFF = [
-    "TriggerMode",
-    "GainAuto",
-    "AutoFunctionAOIsControl",
-    "AcquisitionFrameRateAuto",
-]
+# PARAMETER_FALSE_MEANS_OFF = [
+#     "TriggerMode",
+#     "GainAuto",
+#     "AutoFunctionAOIsControl",
+#     "AcquisitionFrameRateAuto",
+# ]
+
+BOOLEAN_STRING_DICT = {False: "Off", True: "On"}
 
 
 class SpinnakerCameraNode(Node):
@@ -124,7 +126,7 @@ class SpinnakerCameraNode(Node):
             exit()
 
     def set_camera_settings(self):
-        """[]"""
+        """"""
 
         # parse cam_id
         # Cameras can be initialized by index or by id.
@@ -190,18 +192,25 @@ class SpinnakerCameraNode(Node):
         # merge priority camera dict and unset cam dict
         ordered_cam_dict = {**priority_cam_dict, **unset_cam_dict}
 
+        ordered_cam_dict = {"AcquisitionFrameRateAuto": False}
         # set camera settings
         for attribute_name, attribute_value in ordered_cam_dict.items():
 
-            # it would be better to see if attribute should be string, by inspecting expected variable type
-            if attribute_name in PARAMETER_FALSE_MEANS_OFF:
-                if attribute_value == False:
-                    attribute_value = "Off"
-                elif attribute_value == True:
-                    attribute_value = "On"
-
             try:
                 setattr(self.cam, attribute_name, attribute_value)
+            except TypeError:
+                self.get_logger().info(
+                    f"TypeError for {attribute_name}: {attribute_value}, using '{BOOLEAN_STRING_DICT[attribute_value]}'"
+                )
+                attribute_value = BOOLEAN_STRING_DICT[attribute_value]
+
+                # try with converted type, otherwise throw bigger error
+                try:
+                    setattr(self.cam, attribute_name, attribute_value)
+                except:
+                    self.get_logger().warn(
+                        f"Error setting [{attribute_name}: {attribute_value}], skipping"
+                    )
             except:
                 self.get_logger().warn(
                     f"Error setting [{attribute_name}: {attribute_value}], skipping"
@@ -210,7 +219,7 @@ class SpinnakerCameraNode(Node):
         # get chunk settings
         chunk_params = self.get_parameters_by_prefix("camera_chunkdata")
         chunk_dict = {}
-        for chunk_paramname, chunkparam in chunk_params.items():
+        for chunk_paramname, _ in chunk_params.items():
             chunk_paramval = self.get_parameter(
                 f"camera_chunkdata.{chunk_paramname}"
             ).value
@@ -232,7 +241,6 @@ class SpinnakerCameraNode(Node):
     def burn_timestamp(self, img_cv, frame_id, timestamp):
         height = len(img_cv)
 
-        # should use timestmap
         datetime_str = datetime.datetime.fromtimestamp(timestamp / 1e9).strftime(
             "%y/%m/%d %H:%M:%S"
         )
