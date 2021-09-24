@@ -12,7 +12,13 @@ The camera can come with pre-set parameters.
 To ensure you start with a blank camera state, you can pass the parameter reset_camera_settings. 
 This will reboot the camera, and turn all settings into the default values. 
 This does take ~5 seconds, but especially when testing new parameter configurations I recommend setting it to True. 
--TLM 
+
+Parameters:
+- cam_id: unique camera identifier. Find by e.g. opening up spinview
+- image_topic: Images will be published to this topic 
+- reset_camera_settings: At launching the node, this option can reset the camera. This takes roughly 5 seconds. 
+- latch_timing_interval_s: Redo the latching every x seconds to ensure image timestamps do not drift 
+- add_timestamp: Option to burn a human-readable timestamp on the bottom right of the image
 """
 
 import rclpy
@@ -46,13 +52,6 @@ CAMERA_PRIORITY_SET_ORDER = [
     "Exposure",
 ]
 
-# PARAMETER_FALSE_MEANS_OFF = [
-#     "TriggerMode",
-#     "GainAuto",
-#     "AutoFunctionAOIsControl",
-#     "AcquisitionFrameRateAuto",
-# ]
-
 BOOLEAN_STRING_DICT = {False: "Off", True: "On"}
 
 
@@ -74,19 +73,14 @@ class SpinnakerCameraNode(Node):
             if not self.has_parameter(key):
                 self.declare_parameter(key, value)
 
+        # flag to burn timestamp in bottom left of image
         self.add_timestamp = self.get_parameter("add_timestamp").value
-
-        self.cam_id = self.get_parameter("cam_id").value
-        self.image_topic = self.get_parameter("image_topic").value
 
         # Call method that sets camera properties
         self.set_camera_settings()
 
-        try:
-            self.cam.start()
-        except BaseException:
-            self.get_logger().error(f"error: {sys.exc_info()}")
-            raise Exception
+        # start acquiring images
+        self.cam.start()
 
         # latch a timestamp to find the offset betweem computer and camera clock
         self.latch_timing_offset()
@@ -96,21 +90,37 @@ class SpinnakerCameraNode(Node):
         self.latch_timer_period = self.get_parameter("latch_timing_interval_s").value
 
         # setup image publisher
+        image_topic = self.get_parameter("image_topic").value
         self.pub_stream = self.create_publisher(
             Image,
-            self.image_topic,
+            image_topic,
             QoSProfile(depth=1, reliability=QoSReliabilityPolicy.RELIABLE),
         )
+
+        # bridge translates Image messages to cv2 images and vice versa
         self.bridge = CvBridge()
 
     def latch_timing_offset(self):
+        """Obtain offset between camera and computer clocks
+        This offset will be added to timestamp that comes with image
+        More on latching:
+            https://www.flir.com/support-center/iis/machine-vision/application-note/synchronizing-a-blackfly-or-grasshopper3-gige-cameras-time-to-pc-time/
+        """
+
+        # call camera to store a timestamp
         self.cam.cam.TimestampLatch.Execute()
+        # get computer to call a timestamp
         time_nanosec = self.get_clock().now().nanoseconds
+
+        # request timestamp it stored from the camera
         timestamp = self.cam.cam.Timestamp.GetValue()
+
+        # compute offset
         self.offset_nanosec = time_nanosec - timestamp
 
     @contextmanager
     def error_if_unavailable(self):
+        """Log error and kill node if unable to open a camera"""
         try:
             yield
         except:
@@ -126,14 +136,17 @@ class SpinnakerCameraNode(Node):
             exit()
 
     def set_camera_settings(self):
-        """"""
+        """Initialize camera object and apply camera_settings (e.g. AcquisitionFrameRate). """
 
-        # parse cam_id
-        # Cameras can be initialized by index or by id.
-        # If a large int, it most likely means an id, which is of a string format
-        # note that leading zeros in cam id of type int would result in bugs that can only be solved before yaml is produced
+        # parse cam_id, Cameras can be initialized by index or by id.
+        self.cam_id = self.get_parameter("cam_id").value
         if (type(self.cam_id) == int) and (self.cam_id > 10):
+            # If a large int, it most likely means an id, which is of a string format
+            # note that leading zeros in cam id of type int would result in bugs that can only be solved before yaml is produced
             self.cam_id = f"{self.cam_id}"
+        elif type(self.cam_id) == str:
+            # You can prepend an id with a dollar sign in the yaml file to force the string type. We'll remove that here.
+            self.cam_id = self.cam_id.replace("$", "")
 
         with self.error_if_unavailable():
             if self.cam_id is None:
@@ -142,13 +155,9 @@ class SpinnakerCameraNode(Node):
                 self.cam = Camera(self.cam_id)
                 self.get_logger().info(f"Opening camera by serial: {self.cam_id}")
 
-        # unsure if this one also needs to be in context manager
-        with self.error_if_unavailable():
-            self.cam.init()
-
-        # Camera Reset
-        # The camera will actually turn off and on, resetting all parameters to the default
+        # Camera Reset, this will turn the camera off and on, resetting all parameters to the default
         if self.get_parameter("reset_camera_settings").value:
+            # init to get access to resetting function
             self.cam.init()
             self.cam.DeviceReset()
             self.get_logger().info("Resetting camera, sleeping for 5 seconds")
@@ -159,6 +168,7 @@ class SpinnakerCameraNode(Node):
                 self.cam = Camera(self.cam_id)
             self.get_logger().info("Camera restarted")
 
+        # Initialize camera to gain access to full functionality
         self.cam.init()
 
         # if no cam_id specified in param, log serial of camera opened
@@ -168,37 +178,40 @@ class SpinnakerCameraNode(Node):
                 f"No serial specified, opened camera has serial: {acquired_cam_id}"
             )
 
-        # get desired camera settings
-        parameter_dict = self.get_parameters_by_prefix("camera_settings")
+        # camera_settings will be applied to the camera, as opposed to the other parameters which are used to control the node behavior.
+        unparsed_cam_dict = self.get_parameters_by_prefix("camera_settings")
         cam_dict = {}
-        for param_name, _ in parameter_dict.items():
+        for param_name, _ in unparsed_cam_dict.items():
             cam_dict[param_name] = self.get_parameter(
                 f"camera_settings.{param_name}"
             ).value
 
-        # force camera dictionary in the following order
+        # cam_dict parameters are divided into ones found in the priority set order, and those that are not
         # out of order setting of parameters can result in error
-        # e.g. AcquisitionFrameRatesetting before it is enabled
+        # e.g. if attempting to set AcquisitionFrameRate setting before AcquisitionFrameRateAuto is turned off, the setting is ignored.
         priority_cam_dict = {}
         for item in CAMERA_PRIORITY_SET_ORDER:
             if item in list(cam_dict):
                 priority_cam_dict[item] = cam_dict[item]
 
-        unset_cam_dict = {}
+        unprioritized_cam_dict = {}
         for param_name, param_value in cam_dict.items():
             if param_name not in CAMERA_PRIORITY_SET_ORDER:
-                unset_cam_dict[param_name] = param_value
+                unprioritized_cam_dict[param_name] = param_value
 
-        # merge priority camera dict and unset cam dict
-        ordered_cam_dict = {**priority_cam_dict, **unset_cam_dict}
+        # merge priority camera dict and unset cam dict.
+        # Prioritized cam dict will be applied first, and is sorted to ensure they are not ignored
+        ordered_cam_dict = {**priority_cam_dict, **unprioritized_cam_dict}
 
-        ordered_cam_dict = {"AcquisitionFrameRateAuto": False}
-        # set camera settings
+        # attempt to apply setting to camera
+        # failure to apply setting will log warning, but does not cause node failure
         for attribute_name, attribute_value in ordered_cam_dict.items():
-
             try:
                 setattr(self.cam, attribute_name, attribute_value)
             except TypeError:
+                # yaml turns "On" to True, and "Off" to False under certain circumstances
+                # The camera does not accept True for "On" and will ignore this setting attempt
+                # if we get the type error, we can guess a remapping and retry the setting
                 self.get_logger().info(
                     f"TypeError for {attribute_name}: {attribute_value}, using '{BOOLEAN_STRING_DICT[attribute_value]}'"
                 )
@@ -209,36 +222,46 @@ class SpinnakerCameraNode(Node):
                     setattr(self.cam, attribute_name, attribute_value)
                 except:
                     self.get_logger().warn(
-                        f"Error setting [{attribute_name}: {attribute_value}], skipping"
+                        f"Error setting [{attribute_name}: {attribute_value}] after type conversion! skipping"
                     )
             except:
                 self.get_logger().warn(
                     f"Error setting [{attribute_name}: {attribute_value}], skipping"
                 )
 
-        # get chunk settings
+        # convert chunkdata. Chunkdata is another word for image meta data
         chunk_params = self.get_parameters_by_prefix("camera_chunkdata")
+
+        # build up the nested chunk_dictionary, it will be of the form:
+        # chunk_dict = {'timestamp': {'ChunkEnable': True, 'ChunkModeActive': True}}
         chunk_dict = {}
-        for chunk_paramname, _ in chunk_params.items():
-            chunk_paramval = self.get_parameter(
-                f"camera_chunkdata.{chunk_paramname}"
+        for chunk_param_name, _ in chunk_params.items():
+            chunk_param_value = self.get_parameter(
+                f"camera_chunkdata.{chunk_param_name}"
             ).value
 
-            chunk_parts = chunk_paramname.split(".")
+            chunk_parts = chunk_param_name.split(".")
             chunk_selector = chunk_parts[0]
-            sub_dict = {chunk_parts[1]: chunk_paramval}
+            sub_dict = {chunk_parts[1]: chunk_param_value}
             if chunk_dict.get(chunk_selector, "") == "":
                 chunk_dict[chunk_selector] = sub_dict
             else:
                 chunk_dict[chunk_selector] = {**chunk_dict[chunk_selector], **sub_dict}
 
-        # set chunk settings
-        for chunkselector, chunkswitches in chunk_dict.items():
-            setattr(self.cam, "ChunkSelector", chunkselector)
-            for chunkswitch, chunkbool in chunkswitches.items():
-                setattr(self.cam, chunkswitch, chunkbool)
+        # Apply chunk data settings
+        for chunk_name, chunk_switches in chunk_dict.items():
+            try:
+                setattr(self.cam, "ChunkSelector", chunk_name)
+                for chunkswitch, chunkbool in chunk_switches.items():
+                    setattr(self.cam, chunkswitch, chunkbool)
+            except:
+                self.get_logger().warn(
+                    f"Error setting chunkdata: {chunk_name}: {chunk_switches}, ignoring settings"
+                )
 
     def burn_timestamp(self, img_cv, frame_id, timestamp):
+        """Burn timestamp in bottom left of the image"""
+
         height = len(img_cv)
 
         datetime_str = datetime.datetime.fromtimestamp(timestamp / 1e9).strftime(
@@ -266,24 +289,29 @@ class SpinnakerCameraNode(Node):
             1,
         )
 
-    def stream_camera(self):
+    def grab_and_publish_frame(self):
+        """Grab image and meta data, convert to image message, and publish to topic"""
+
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)
+
+        # offset is computed during latching
         timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
         frame_id = chunk_data.GetFrameID()
 
         if self.add_timestamp:
             self.burn_timestamp(img_cv, frame_id, timestamp)
 
+        # convert image to ros2 Image message type
+        # this will initialize an empty header
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
 
-        secs = int(timestamp / 1e9)
-        nsecs = int(timestamp - secs * 1e9)
-
-        img_msg.header.stamp.sec = secs
-        img_msg.header.stamp.nanosec = nsecs
+        # fill in header from camera chunk data
+        img_msg.header.stamp = rclpy.time.Time(nanoseconds=timestamp).to_msg()
         img_msg.header.frame_id = str(frame_id)
+
         self.pub_stream.publish(img_msg)
 
+        # if latching is past it's timer period, redo latching
         if (time.time() - self.last_latch_time) > self.latch_timer_period:
             self.latch_timing_offset()
             self.last_latch_time = time.time()
@@ -295,7 +323,7 @@ def main():
 
     try:
         while rclpy.ok():
-            camera_node.stream_camera()
+            camera_node.grab_and_publish_frame()
     except KeyboardInterrupt:
         pass
     except BaseException:

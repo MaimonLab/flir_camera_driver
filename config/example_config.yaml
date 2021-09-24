@@ -19,6 +19,8 @@ basic_example_camera:
       FrameCounter:
         ChunkEnable: True
         ChunkModeActive: True
+      randomChunk:
+        blabla: False
       Timestamp:
         ChunkEnable: True
         ChunkModeActive: True
