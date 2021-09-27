@@ -1,7 +1,15 @@
-basic_example_camera:
+camera_basic_controls:
   ros__parameters:
-    image_topic: "camera/image_mono"
-    latency_topic: "camera/latency"
+    camera_settings:
+      TriggerMode: Off
+      GainAuto: Off
+      Gain: 18
+      AcquisitionFrameRateAuto: Off
+      AcquisitionFrameRateEnabled: True
+      AcquisitionFrameRate: 100
+
+camera_with_settings:
+  ros__parameters:
     add_timestamp: True
     publish_grayscale: True
     publish_color: False
@@ -24,21 +32,17 @@ basic_example_camera:
       Timestamp:
         ChunkEnable: True
         ChunkModeActive: True
-camera_test_off:
+
+camera_with_id:
   ros__parameters:
-    image_topic: "camera/image_mono"
-    latency_topic: "camera/latency"
-    camera_settings:
-      TriggerMode: Off
-      GainAuto: Off
-      Gain: 18
-      AcquisitionFrameRateAuto: Off
-      AcquisitionFrameRateEnabled: True
-      AcquisitionFrameRate: 100
-camera_test_id:
-  ros__parameters:
-    image_topic: "camera/image_mono"
-    latency_topic: "camera/latency"
     cam_id: 18518215
-    publish_grayscale: True
-    publish_color: True
+
+camera_with_reset:
+  ros__parameters:
+    add_timestamp: True
+    reset_camera_settings: True
+
+camera_with_custom_topic:
+  ros__parameters:
+    cam_id: 18518215
+    image_topic: "special_camera/example_image_topic_name"

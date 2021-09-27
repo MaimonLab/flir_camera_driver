@@ -10,15 +10,16 @@ ruamel_yaml.default_flow_style = False
 def generate_launch_description():
     ld = LaunchDescription()
 
+    # get config file directory
     ros_package_path = get_package_share_directory("flir_camera_driver")
-    print(f"Ros package path: {ros_package_path}")
-
     workspace = ros_package_path.split("/install")[0]
     config_file = f"{workspace}/src/flir_camera_driver/config/example_config.yaml"
 
+    # load config file as a dictionary
     with open(config_file, "r") as yaml_file:
         example_config = ruamel_yaml.load(yaml_file)
 
+    # prompt user to select one node out of the config file
     print(f"\nSelect node name")
     option_dict = {}
     default_idx = 0
@@ -28,9 +29,10 @@ def generate_launch_description():
         else:
             print(f"   {idx}. {node_name}")
         option_dict[str(idx)] = node_name
-    input_str = input("Select config: ")
+    input_str = input("Select config: ").strip()
     print(f"")
 
+    # parse user input, exiting if it cannot be parsed. This part is fragile
     try:
         if input_str == "":
             input_str = str(default_idx)
@@ -41,6 +43,7 @@ def generate_launch_description():
         print(f"Error parsing your input, exiting")
         exit()
 
+    # add nodes with parameters to the launch description
     camera = Node(
         package="flir_camera_driver",
         name="basic_example_camera",
@@ -53,7 +56,7 @@ def generate_launch_description():
         package="rqt_image_view",
         name="image_preview",
         executable="rqt_image_view",
-        arguments=["/camera/image_mono"],
+        arguments=["/camera/image"],
     )
     ld.add_action(rqt_viewer)
 

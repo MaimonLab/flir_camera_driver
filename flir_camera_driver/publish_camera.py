@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """ 
-publish_pyspin_simple.py
+publish_camera.py
 
 This node opens a FLIR camera through pyspin and publishes that to the topic specified in the config. 
 In the initialization function you can set camera parameters, though this part is fragile. 
@@ -18,7 +18,13 @@ Parameters:
 - image_topic: Images will be published to this topic 
 - reset_camera_settings: At launching the node, this option can reset the camera. This takes roughly 5 seconds. 
 - latch_timing_interval_s: Redo the latching every x seconds to ensure image timestamps do not drift 
-- add_timestamp: Option to burn a human-readable timestamp on the bottom right of the image
+- add_timestamp: Option to burn a human-readable timestamp on the bottom left of the image
+- camera_settings.xxx: camera settings will be a dictionary of parameters that need to be set to the camera (see example_config)
+- camera_chunkdata.xxx camera_chunkdata is a dictionary of dictionaries, see example_config 
+
+for a list of parameters that can be set on a FLIR chameleon3: 
+https://klecknerlab.github.io/simple_pyspin/cameras/Point_Grey_Research_Chameleon3_CM3-U3-13Y3M.html
+
 """
 
 import rclpy

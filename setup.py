@@ -6,7 +6,7 @@ package_name = "flir_camera_driver"
 
 setup(
     name=package_name,
-    version="0.1.0",
+    version="0.1.1",
     packages=[package_name],
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
@@ -26,7 +26,7 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "publish_camera = flir_camera_driver.publish_pyspin_simple:main",
+            "publish_camera = flir_camera_driver.publish_camera:main",
         ],
     },
 )
