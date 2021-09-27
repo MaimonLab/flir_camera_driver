@@ -112,5 +112,6 @@ Currently this repository is only accessible for maimon lab members. We plan to 
 
 # Release Notes
 
-**0.1.x** Update readme to include installation instructions
+**0.1.1** Update readme to include installation instructions
+
 **0.1.0** Tested on Chameleon CM3-U3-13Y3M
