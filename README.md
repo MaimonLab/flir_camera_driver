@@ -23,6 +23,11 @@ In this exmaple the parameters from `/config/example_config.yaml` under the head
 
 # Installation
 
+Install python dependencies
+
+    pip3 install opencv-python
+    pip3 install opencv-contrib-python
+
 We'll need to install **Spinnaker**, **spinnaker_python** and **pyspin-simple**.
 
 1.  **Download and install Spinnaker** You can download [spinnaker](https://www.flir.com/products/spinnaker-sdk/) from FLIR's website. At the website go to:

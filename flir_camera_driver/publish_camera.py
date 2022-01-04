@@ -74,6 +74,7 @@ class SpinnakerCameraNode(Node):
             "reset_camera_settings": False,
             "latch_timing_interval_s": 5,
             "add_timestamp": False,
+            "flip_y": False,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -142,7 +143,7 @@ class SpinnakerCameraNode(Node):
             exit()
 
     def set_camera_settings(self):
-        """Initialize camera object and apply camera_settings (e.g. AcquisitionFrameRate). """
+        """Initialize camera object and apply camera_settings (e.g. AcquisitionFrameRate)."""
 
         # parse cam_id, Cameras can be initialized by index or by id.
         self.cam_id = self.get_parameter("cam_id").value
@@ -299,6 +300,9 @@ class SpinnakerCameraNode(Node):
         """Grab image and meta data, convert to image message, and publish to topic"""
 
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)
+
+        if self.get_parameter("flip_y").value == True:
+            img_cv = cv2.flip(img_cv, 0)
 
         # offset is computed during latching
         timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
