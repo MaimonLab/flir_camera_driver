@@ -19,18 +19,17 @@ def main():
             setattr(cam, "AcquisitionFrameRateAuto", "Off")
 
             setattr(cam, "AcquisitionFrameRateEnabled", True)
-            setattr(cam, "AcquisitionFrameRate", 5)
-
+            setattr(cam, "AcquisitionFrameRate", 30)
+            setattr(cam, "BinningVertical", 2)
             print(f"starting camera {cam.DeviceID}")
-            print(f"starting camera {cam.DeviceSerialNumber}")
+
             cam.start()
 
             while True:
-                pre_time = time.time()
+                # pre_time = time.time()
                 # print("pre_get")
-
                 img_cv = cam.get_array()
-                print(f"aq_t: {time.time() - pre_time}")
+                # print(f"aq_t: {time.time() - pre_time}")
                 # print("post_get")
                 height = len(img_cv)
                 cv2.putText(
@@ -39,9 +38,9 @@ def main():
                     (0, height // 5),
                     # (0, height - 5),
                     cv2.FONT_HERSHEY_COMPLEX,
-                    2,
+                    1,
                     (255, 255, 255),
-                    3,
+                    1,
                 )
                 cv2.putText(
                     img_cv,
@@ -49,9 +48,9 @@ def main():
                     (0, height // 2),
                     # (0, height - 5),
                     cv2.FONT_HERSHEY_COMPLEX,
-                    3,
+                    1.8,
                     (255, 255, 255),
-                    3,
+                    2,
                 )
                 # print("pre_show")
                 cv2.imshow("image", img_cv)
@@ -62,8 +61,8 @@ def main():
                     break
                 if key & 0xFF == ord("q"):
                     return
-
-        # break
+    print("Done!")
+    # break
 
 
 if __name__ == "__main__":
