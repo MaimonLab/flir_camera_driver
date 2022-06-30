@@ -98,11 +98,11 @@ class SpinnakerCameraNode(Node):
 
         # setup image publisher
         image_topic = self.get_parameter("image_topic").value
-        self.pub_stream = self.create_publisher(
-            Image,
-            image_topic,
-            QoSProfile(depth=1, reliability=QoSReliabilityPolicy.RELIABLE),
+        # qos_publisher = QoSProfile(depth=1, reliability=QoSReliabilityPolicy.RELIABLE)
+        qos_publisher = QoSProfile(
+            depth=1, reliability=QoSReliabilityPolicy.BEST_EFFORT
         )
+        self.pub_stream = self.create_publisher(Image, image_topic, qos_publisher)
 
         # bridge translates Image messages to cv2 images and vice versa
         self.bridge = CvBridge()
