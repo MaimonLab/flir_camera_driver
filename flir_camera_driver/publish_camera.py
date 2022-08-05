@@ -76,7 +76,7 @@ class SpinnakerCameraNode(Node):
             "add_timestamp": False,
             "flip_y": False,
             "qos_image_publish_reliable": False,
-            "disregard_chunkdata": True
+            "disregard_chunkdata": False
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
