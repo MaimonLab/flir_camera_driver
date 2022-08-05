@@ -75,6 +75,7 @@ class SpinnakerCameraNode(Node):
             "latch_timing_interval_s": 5,
             "add_timestamp": False,
             "flip_y": False,
+            "qos_image_publish_reliable": False,
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -97,12 +98,15 @@ class SpinnakerCameraNode(Node):
         self.latch_timer_period = self.get_parameter("latch_timing_interval_s").value
 
         # setup image publisher
+        if self.get_parameter("qos_image_publish_reliable").value:
+            qos_publish = QoSProfile(depth=1, reliability=QoSReliabilityPolicy.RELIABLE)
+        else:
+            qos_publish = QoSProfile(
+                depth=1, reliability=QoSReliabilityPolicy.BEST_EFFORT
+            )
+
         image_topic = self.get_parameter("image_topic").value
-        self.pub_stream = self.create_publisher(
-            Image,
-            image_topic,
-            QoSProfile(depth=1, reliability=QoSReliabilityPolicy.RELIABLE),
-        )
+        self.pub_stream = self.create_publisher(Image, image_topic, qos_publish)
 
         # bridge translates Image messages to cv2 images and vice versa
         self.bridge = CvBridge()
