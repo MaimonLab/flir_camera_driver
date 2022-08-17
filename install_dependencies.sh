@@ -1,12 +1,13 @@
 
 sudo apt-get update
 sudo apt install -y python3-pip
+sudo apt-get install -y wget
 
 pip3 install opencv-python
 pip3 install opencv-contrib-python
 
-mkdir -p ~/src/spinnaker
-cd ~/src/spinnaker
+mkdir -p ~/Downloads
+cd ~/Downloads
 
 wget https://www.dropbox.com/sh/xod2fj9wqq0ie82/AABnzTO7hqbQ5v7ndBbzEevwa/spinnaker/spinnaker-2.3.0.77-Ubuntu20.04-amd64-pkg.tar.gz
 
@@ -20,7 +21,9 @@ libxcb-xinerama0
 
 echo "Installing Spinnaker packages..."
 
-sudo dpkg -i libspinnaker_*.deb
+# this asks you to accept the agreement 
+yes | sudo dpkg -i libspinnaker_*.deb
+
 sudo dpkg -i libspinnaker-dev_*.deb
 sudo dpkg -i libspinnaker-c_*.deb
 sudo dpkg -i libspinnaker-c-dev_*.deb
@@ -62,13 +65,13 @@ fi
 
 echo "UDEV Configuration complete."
 echo "A reboot may be required on some systems for changes to take effect."
-exit 0
+# exit 0
 
 sudo sh configure_usbfs.sh
 
 sudo sh configure_spinnaker_paths.sh
 
-cd ~/src/spinnaker
+cd ~/Downloads
 wget https://www.dropbox.com/sh/xod2fj9wqq0ie82/AABu07_NN5hMkwb-W_E69wFja/spinnaker/spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz
 
 tar -xvzf  spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz
