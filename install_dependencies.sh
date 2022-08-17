@@ -74,7 +74,7 @@ sudo sh configure_spinnaker_paths.sh
 cd ~/Downloads
 wget https://www.dropbox.com/sh/xod2fj9wqq0ie82/AABu07_NN5hMkwb-W_E69wFja/spinnaker/spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz
 
-tar -xvzf  spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz
+tar -xvzf  spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz -C spinnaker_python-2.3.0.77
 cd spinnaker_python-2.3.0.77
 
 sudo python3.8 -m pip install --upgrade numpy matplotlib
