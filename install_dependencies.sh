@@ -1,4 +1,5 @@
 
+sudo apt-get update
 sudo apt install -y python3-pip
 
 pip3 install opencv-python
@@ -6,7 +7,9 @@ pip3 install opencv-contrib-python
 
 mkdir -p ~/src/spinnaker
 cd ~/src/spinnaker
-wget https://www.dropbox.com/s/m2vwc5j1o58tt7f/spinnaker-2.3.0.77-Ubuntu20.04-amd64-pkg.tar.gz?dl=0
+# WKJ
+# wget https://www.dropbox.com/s/m2vwc5j1o58tt7f/spinnaker-2.3.0.77-Ubuntu20.04-amd64-pkg.tar.gz?dl=0
+wget https://www.dropbox.com/sh/xod2fj9wqq0ie82/AABnzTO7hqbQ5v7ndBbzEevwa/spinnaker/spinnaker-2.3.0.77-Ubuntu20.04-amd64-pkg.tar.gz?dl=0
 
 
 tar -xvzf   spinnaker-2.3.0.77-Ubuntu20.04-amd64-pkg.tar.gz
@@ -289,7 +292,8 @@ echo "Installation complete."
 
 
 cd ~/src/spinnaker
-wget https://www.dropbox.com/s/jrgzcv149lfb354/spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz?dl=0
+# wget https://www.dropbox.com/s/jrgzcv149lfb354/spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz?dl=0
+wget https://www.dropbox.com/sh/xod2fj9wqq0ie82/AABu07_NN5hMkwb-W_E69wFja/spinnaker/spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz?dl=0
 
 tar -xvzf  spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz
 cd spinnaker_python-2.3.0.77
