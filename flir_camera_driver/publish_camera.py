@@ -76,6 +76,7 @@ class SpinnakerCameraNode(Node):
             "add_timestamp": False,
             "flip_y": False,
             "qos_image_publish_reliable": False,
+            "disregard_chunkdata": False
         }
         for key, value in default_param.items():
             if not self.has_parameter(key):
@@ -90,12 +91,18 @@ class SpinnakerCameraNode(Node):
         # start acquiring images
         self.cam.start()
 
-        # latch a timestamp to find the offset betweem computer and camera clock
-        self.latch_timing_offset()
+
+        # disregard chunkdata is a flag to deal with an issue where chunkdata are garbled 
+        if not self.get_parameter("disregard_chunkdata").value:
+            # latch a timestamp to find the offset betweem computer and camera clock
+            self.latch_timing_offset()
+            self.latch_timer_period = self.get_parameter("latch_timing_interval_s").value
+        else: 
+            self.get_logger().warn(f"Disregarding chunkdata, using timestamp at arrival, and counter as frameid")
+            self.latch_timer_period = float('infinity')
 
         # setup parameters to periodically update latch period
         self.last_latch_time = time.time()
-        self.latch_timer_period = self.get_parameter("latch_timing_interval_s").value
 
         # setup image publisher
         if self.get_parameter("qos_image_publish_reliable").value:
@@ -110,6 +117,7 @@ class SpinnakerCameraNode(Node):
 
         # bridge translates Image messages to cv2 images and vice versa
         self.bridge = CvBridge()
+        self.count_published_images = 0
 
     def latch_timing_offset(self):
         """Obtain offset between camera and computer clocks
@@ -240,26 +248,52 @@ class SpinnakerCameraNode(Node):
                     f"Error setting [{attribute_name}: {attribute_value}], skipping"
                 )
 
+        # camera_chunkdata:
+        #   FrameCounter:
+        #     ChunkEnable: True
+        #     ChunkModeActive: True
+        #   randomChunk:
+        #     blabla: False
+        #   Timestamp:
+        #     ChunkEnable: True
+        #     ChunkModeActive: True
         # convert chunkdata. Chunkdata is another word for image meta data
         chunk_params = self.get_parameters_by_prefix("camera_chunkdata")
+        print(f"Chunk params: {chunk_params} ")
 
-        # build up the nested chunk_dictionary, it will be of the form:
-        # chunk_dict = {'timestamp': {'ChunkEnable': True, 'ChunkModeActive': True}}
-        chunk_dict = {}
-        for chunk_param_name, _ in chunk_params.items():
-            chunk_param_value = self.get_parameter(
-                f"camera_chunkdata.{chunk_param_name}"
-            ).value
+        if len(chunk_params) == 0:       
+            chunk_dict= {
+                "FrameCounter": {
+                    "ChunkEnable": True,
+                    "ChunkModeActive": True
+                },
+                "Timestamp":{
+                    "ChunkEnable": True,
+                    "ChunkModeActive": True
+                }
+            }
+            self.get_logger().warn(f"Using default chunk dict")
+        else: 
 
-            chunk_parts = chunk_param_name.split(".")
-            chunk_selector = chunk_parts[0]
-            sub_dict = {chunk_parts[1]: chunk_param_value}
-            if chunk_dict.get(chunk_selector, "") == "":
-                chunk_dict[chunk_selector] = sub_dict
-            else:
-                chunk_dict[chunk_selector] = {**chunk_dict[chunk_selector], **sub_dict}
+        # # build up the nested chunk_dictionary, it will be of the form:
+        # # chunk_dict = {'timestamp': {'ChunkEnable': True, 'ChunkModeActive': True}}
+            chunk_dict = {}
+            for chunk_param_name, _ in chunk_params.items():
+                chunk_param_value = self.get_parameter(
+                    f"camera_chunkdata.{chunk_param_name}"
+                ).value
 
-        # Apply chunk data settings
+                chunk_parts = chunk_param_name.split(".")
+                chunk_selector = chunk_parts[0]
+                sub_dict = {chunk_parts[1]: chunk_param_value}
+                if chunk_dict.get(chunk_selector, "") == "":
+                    chunk_dict[chunk_selector] = sub_dict
+                else:
+                    chunk_dict[chunk_selector] = {**chunk_dict[chunk_selector], **sub_dict}
+
+        # # Apply chunk data settings
+
+        self.get_logger().warn(f"chunk dict: {chunk_dict}")
         for chunk_name, chunk_switches in chunk_dict.items():
             try:
                 setattr(self.cam, "ChunkSelector", chunk_name)
@@ -304,13 +338,24 @@ class SpinnakerCameraNode(Node):
         """Grab image and meta data, convert to image message, and publish to topic"""
 
         img_cv, chunk_data = self.cam.get_array(get_chunk=True)
-
         if self.get_parameter("flip_y").value == True:
             img_cv = cv2.flip(img_cv, 0)
 
-        # offset is computed during latching
-        timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
-        frame_id = chunk_data.GetFrameID()
+        # fill in header from camera chunk data
+        # disregard chunkdata is a temporary fix for errors in fictrac 
+        if self.get_parameter("disregard_chunkdata").value:
+            frame_id = str(self.count_published_images) 
+            timestamp = self.get_clock().now().nanoseconds
+            stamp = rclpy.time.Time(nanoseconds=timestamp).to_msg()
+            self.count_published_images += 1 
+        else: 
+            # offset is computed during latching
+            timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
+            frame_id = chunk_data.GetFrameID() 
+            stamp = rclpy.time.Time(nanoseconds=timestamp).to_msg()
+            frame_id = str(frame_id) 
+
+
 
         if self.add_timestamp:
             self.burn_timestamp(img_cv, frame_id, timestamp)
@@ -319,10 +364,9 @@ class SpinnakerCameraNode(Node):
         # this will initialize an empty header
         img_msg = self.bridge.cv2_to_imgmsg(img_cv)
 
-        # fill in header from camera chunk data
-        img_msg.header.stamp = rclpy.time.Time(nanoseconds=timestamp).to_msg()
-        img_msg.header.frame_id = str(frame_id)
 
+        img_msg.header.frame_id = frame_id 
+        img_msg.header.stamp = stamp 
         self.pub_stream.publish(img_msg)
 
         # if latching is past it's timer period, redo latching
@@ -335,6 +379,7 @@ def main():
     rclpy.init()
     camera_node = SpinnakerCameraNode()
 
+    camera_node.grab_and_publish_frame()
     try:
         while rclpy.ok():
             camera_node.grab_and_publish_frame()
