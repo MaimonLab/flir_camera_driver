@@ -7,7 +7,7 @@ sudo apt-get install -y wget
 
 # install python packages required for spinnaer
 pip3 install opencv-python
-pip3 install opencv-contrib-python
+# pip3 install opencv-contrib-python
 
 
 # download spinner to the Downloads folder ,create if this doens't exist yet

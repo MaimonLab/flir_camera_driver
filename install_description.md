@@ -3,7 +3,8 @@
 Install python dependencies
 
     pip3 install opencv-python
-    pip3 install opencv-contrib-python
+
+<!-- pip3 install opencv-contrib-python -->
 
 We'll need to install **Spinnaker**, **spinnaker_python** and **pyspin-simple**.
 
