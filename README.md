@@ -23,9 +23,14 @@ In this exmaple the parameters from `/config/example_config.yaml` under the head
 
 # Installation
 
-Use the installation script (you will be prompted mid-way to accept their license agreement):
+Use the installation script:
 
     ./install_description.sh
+
+This will install all dependencies and call the spinnaker install script. You will be prompted for options, most importantly:
+
+- Do you want to add a user to the **udev permission**? Here you want to say [yes], and add the username (`maimon` in my case). If you do not add this setting, your PointGrey USB cameras will not be detected in spinview and the spinnaker SDK.
+- You need an increased [usbfs](https://www.flir.com/support-center/iis/machine-vision/application-note/using-linux-with-usb-3.1/) memory. Ubuntu has it set to 16 Mb/s by default, but FLIR recommends setting this to 1000 Mb.
 
 Instead of the script, you can follow the [install description](./install_description.md)
 
