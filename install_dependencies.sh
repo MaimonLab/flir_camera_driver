@@ -9,7 +9,6 @@ sudo apt-get install -y wget
 pip3 install opencv-python
 # pip3 install opencv-contrib-python
 
-
 # download spinner to the Downloads folder ,create if this doens't exist yet
 mkdir -p ~/Downloads
 cd ~/Downloads
@@ -25,56 +24,8 @@ libswscale5 libswresample3 libavutil56 libusb-1.0-0 \
 libpcre2-16-0 libdouble-conversion3 libxcb-xinput0 \
 libxcb-xinerama0
 
-
-
-# install spinnaer specific pacakges
-echo "Installing Spinnaker packages..."
-
-# this asks you to accept the agreement , this is the only yes you need to click 
-yes | sudo dpkg -i libspinnaker_*.deb
-
-sudo dpkg -i libspinnaker-dev_*.deb
-sudo dpkg -i libspinnaker-c_*.deb
-sudo dpkg -i libspinnaker-c-dev_*.deb
-sudo dpkg -i libspinvideo_*.deb
-sudo dpkg -i libspinvideo-dev_*.deb
-sudo dpkg -i libspinvideo-c_*.deb
-sudo dpkg -i libspinvideo-c-dev_*.deb
-sudo dpkg -i spinview-qt_*.deb
-sudo dpkg -i spinview-qt-dev_*.deb
-sudo dpkg -i spinupdate_*.deb
-sudo dpkg -i spinupdate-dev_*.deb
-sudo dpkg -i spinnaker_*.deb
-sudo dpkg -i spinnaker-doc_*.deb
-sudo dpkg -i libgentl_*.deb
-
-
-# add current user to user group
-grpname="flirimaging"
-
-echo "Adding new members to usergroup $grpname..." 
-usrname = $USER
-groupadd -f $grpname
-usermod -a -G $grpname $usrname
-echo "Added user $usrname to $grpname"
-
-# Create udev rule
-UdevFile="/etc/udev/rules.d/40-flir-spinnaker.rules"
-echo "Writing the udev rules file...";
-echo "SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"1e10\", GROUP=\"$grpname\"" 1>>$UdevFile
-
-echo "Restarting udev daemon"
-/etc/init.d/udev restart
-
-echo "UDEV Configuration complete."
-echo "A reboot may be required on some systems for changes to take effect."
-
-# usb to 1000 MB/s 
-sudo sh configure_usbfs.sh
-
-# some path stuff? 
-sudo sh configure_spinnaker_paths.sh
-
+# run the main installer script 
+./install_spinnaker.sh
 
 # Download spinnaker_python 
 cd ~/Downloads
@@ -91,9 +42,11 @@ sudo python3.8 -m pip install --upgrade numpy matplotlib
 # install spinnaker_python wheel 
 pip3 install spinnaker_python-2.3.0.77-cp38-cp38-linux_x86_64.whl 
 
+pip3 install ruamel.yaml
+
 # install simple pyspin, an easy wrapper around pyspin
 pip3 install simple-pyspin
 
-echo "------------------------------------------"
-echo "--------Installation complete.------------"
-echo "------------------------------------------"
+echo "----------------------------------------------"
+echo "--------Finished installing flir_camera_driver"
+echo "----------------------------------------------"
