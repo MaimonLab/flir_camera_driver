@@ -27,6 +27,7 @@ setup(
     entry_points={
         "console_scripts": [
             "publish_camera = flir_camera_driver.publish_camera:main",
+            "publish_camera_simply_py = flir_camera_driver.old:main",
         ],
     },
 )
