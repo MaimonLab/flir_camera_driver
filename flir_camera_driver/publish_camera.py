@@ -125,17 +125,27 @@ class SpinnakerCameraNode(Node):
         More on latching:
             https://www.flir.com/support-center/iis/machine-vision/application-note/synchronizing-a-blackfly-or-grasshopper3-gige-cameras-time-to-pc-time/
         """
-
         # call camera to store a timestamp
         self.cam.cam.TimestampLatch.Execute()
         # get computer to call a timestamp
         time_nanosec = self.get_clock().now().nanoseconds
-
         # request timestamp it stored from the camera
         timestamp = self.cam.cam.Timestamp.GetValue()
-
+        
         # compute offset
-        self.offset_nanosec = time_nanosec - timestamp
+        offset_nanosec = time_nanosec - timestamp
+        if hasattr(self, 'offset_nanosec') and (abs(offset_nanosec - self.offset_nanosec) > 5e8):
+            self.get_logger().error(
+                f"Offset between computer and camera clock changed by more than 0.5 seconds: "
+                + f"{abs(self.offset_nanosec - offset_nanosec)/1e9} seconds. If this happens"
+                + " frequently, you may have a clock issue. If you are synchronizing your clock "
+                + "to a master clock, the system clock may be regularly jumping due to resynchronization"
+                + " with an online network clock other than the PTP grandmaster! Disable Automatic Date & Time"
+                + " in your Date & Time settings, or use a service to make sure that never happens again!!! "
+                " See https://github.com/maimonlab/ptp_tools for more info -- SCT"
+            )
+        self.offset_nanosec = offset_nanosec
+
 
     @contextmanager
     def error_if_unavailable(self):
