@@ -165,6 +165,5 @@ if __name__ == '__main__':
         if key == 32:
             break
         f, chunk = cam.get_new_frame(get_chunk=True)
-        print(chunk.GetFrameID(), chunk.GetTimestamp())
         cv2.imshow('Preview', f)
     cam.destroy()

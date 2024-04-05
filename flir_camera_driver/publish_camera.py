@@ -77,6 +77,7 @@ class SpinnakerCameraNode(BasicNode):
             "qos_image_publish_reliable": False,
             "disregard_chunkdata": False,
             "stream_to_disk": False,
+            "codec": "mjpeg",
             "output_filename": ""
         }
 
@@ -87,7 +88,7 @@ class SpinnakerCameraNode(BasicNode):
 
         # disregard chunkdata is a flag to deal with an issue where chunkdata are garbled
         self.last_latch_time = time.time()
-        self.offset_nanosec = 0
+        # self.offset_nanosec = 0
         if not self.disregard_chunkdata:
             # latch a timestamp to find the offset betweem computer and camera clock
             self.latch_timing_offset()
@@ -188,17 +189,33 @@ class SpinnakerCameraNode(BasicNode):
         )
 
     def grab_and_save_frame(self):
-        cmd = [
-            'ffmpeg', '-y',
-            '-f', 'rawvideo',
-            '-vcodec', 'rawvideo',
-            '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
-            '-r', str(self.cam.get_attr('AcquisitionFrameRate')),
-            '-pix_fmt', 'gray',
-            '-i', '-', '-an',
-            '-vcodec', 'rawvideo',
-            f'{self.output_filename}_video.avi'
-        ]
+        if 'nvenc' in self.codec:
+            cmd = [
+                'ffmpeg', '-y',
+                '-hwaccel', 'cuda',
+                '-hwaccel_output_format', 'cuda',
+                '-f', 'rawvideo',
+                '-vcodec', 'rawvideo',
+                '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
+                '-r', str(self.cam.get_attr('AcquisitionFrameRate')),
+                '-pix_fmt', 'gray',
+                '-i', '-', '-an',
+                '-vcodec', self.codec,
+                '-rc', 'constqp', '-qp', '18',
+                f'{self.output_filename}_video.mp4'
+            ]
+        else:
+            cmd = [
+                'ffmpeg', '-y',
+                '-f', 'rawvideo',
+                '-vcodec', 'rawvideo',
+                '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
+                '-r', str(self.cam.get_attr('AcquisitionFrameRate')),
+                '-pix_fmt', 'gray',
+                '-i', '-', '-an',
+                '-vcodec', self.codec,
+                f'{self.output_filename}_video.mp4'
+            ]
         self.pipe = subprocess.Popen(
             cmd, stdin=subprocess.PIPE,
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -226,16 +243,16 @@ class SpinnakerCameraNode(BasicNode):
 
             # fill in header from camera chunk data
             # disregard chunkdata is a temporary fix for errors in fictrac
-            if self.disregard_chunkdata:
-                frame_id = str(self.count_published_images)
-                timestamp = self.get_clock().now().nanoseconds
-                stamp = Time(nanoseconds=timestamp).to_msg()
-                self.count_published_images += 1
-            else:
+            if not self.disregard_chunkdata:
                 # offset is computed during latching
                 frame_id = str(chunk_data.GetFrameID())
                 timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
                 stamp = Time(nanoseconds=timestamp).to_msg()
+            else:
+                frame_id = str(self.count_published_images)
+                timestamp = self.get_clock().now().nanoseconds
+                stamp = Time(nanoseconds=timestamp).to_msg()
+                self.count_published_images += 1
 
             if self.add_timestamp:
                 self.burn_timestamp(img_cv, frame_id, timestamp)
