@@ -5,7 +5,9 @@ sudo apt-get update
 sudo apt install -y python3-pip
 sudo apt-get install -y wget
 
-# install python packages required for spinnaer
+# install python packages required for spinnaker
+cd ~/maimon_ws/src
+git clone git@github.com:MaimonLab/maimon_classes.git
 pip3 install opencv-python
 # pip3 install opencv-contrib-python
 
@@ -43,9 +45,6 @@ sudo python3.8 -m pip install --upgrade numpy matplotlib
 pip3 install spinnaker_python-2.3.0.77-cp38-cp38-linux_x86_64.whl 
 
 pip3 install ruamel.yaml
-
-# install simple pyspin, an easy wrapper around pyspin
-pip3 install simple-pyspin
 
 echo "----------------------------------------------"
 echo "--------Finished installing flir_camera_driver"
