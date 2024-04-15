@@ -5,14 +5,6 @@ from time import sleep
 
 class Camera:
     def __init__(self, cam_id=0):
-        self._system = PySpin.System.GetInstance()
-        self._cam_list = self._system.GetCameras()
-        self._cam_id = cam_id if cam_id else 0
-
-        self.cam = None
-        self._is_running = False
-        self.cam = self.open_cam()
-
         self._attr_types = {
             PySpin.intfIFloat: PySpin.CFloatPtr,
             PySpin.intfIBoolean: PySpin.CBooleanPtr,
@@ -22,13 +14,14 @@ class Camera:
         }
         self._cam_attr = {}
         self._cam_methods = {}
-        for node in self.cam.GetNodeMap().GetNodes():
-            pit = node.GetPrincipalInterfaceType()
-            name = node.GetName()
-            if pit == PySpin.intfICommand:
-                self._cam_methods[name] = PySpin.CCommandPtr(node)
-            elif pit in self._attr_types:
-                self._cam_attr[name] = self._attr_types[pit](node)
+
+        self._system = PySpin.System.GetInstance()
+        self._cam_list = self._system.GetCameras()
+        self._cam_id = cam_id if cam_id else 0
+
+        self.cam = None
+        self._is_running = False
+        self.cam = self.open_cam()
 
         self.size = (int(self.get_attr('Width')), int(self.get_attr('Height')))
 
@@ -74,7 +67,16 @@ class Camera:
             if attr not in self._cam_attr:
                 return
             if PySpin.IsReadable(self._cam_attr[attr]):
-                return self._cam_attr[attr].GetValue()
+                if hasattr(self._cam_attr[attr], 'GetValue'):
+                    return self._cam_attr[attr].GetValue()
+                elif hasattr(self._cam_attr[attr], 'GetCurrentEntry'):
+                    # attributes of type PySpin.CEnumerationPtr comprise
+                    # a list of entries or "modes" that the attribute that be in,
+                    # so we need to fetch the current entry instead of a value
+                    return self._cam_attr[attr].GetCurrentEntry().GetName()
+                elif hasattr(self._cam_attr[attr], 'GetIntValue'):
+                    return self._cam_attr[attr].GetIntValue()
+            return
         except:
             return
 
@@ -87,8 +89,12 @@ class Camera:
 
                 if hasattr(prop, 'SetValue'):
                     prop.SetValue(val)
-                elif hasattr(prop, 'SetIntValue'):
+                elif hasattr(prop, 'SetIntValue') and isinstance(val, int):
                     prop.SetIntValue(val)
+                elif hasattr(prop, 'GetEntryByName'):
+                    # attributes of type PySpin.CEnumerationPtr requires an integer index
+                    # corresponding to a "mode" that the attribute can be switched to
+                    prop.SetIntValue(prop.GetEntryByName(val).GetValue())
                 else:
                     prop.FromString(val)
                 print(f'Succesfully set {attr} to {val}!')
@@ -100,18 +106,22 @@ class Camera:
         except TypeError:
             if isinstance(val, bool):
                 self.set_attr(attr, 'On' if val else 'Off')
+            else:
+                raise RuntimeWarning(f'Error settings attribute {attr}! Skipping...')
 
-        except BaseException:
+        except Exception as e:
+            print(e)
             raise RuntimeWarning(f'Error settings attribute {attr}! Skipping...')
 
     def reset_settings(self):
         self._cam_id = self.get_attr('DeviceSerialNumber')
         self._cam_methods['DeviceReset'].Execute()
-        del self.cam
+        self.cam.DeInit()
         self.cam = None
         while self.cam is None:
             sleep(5)
             try:
+                self._cam_list = self._system.GetCameras()
                 self.cam = self.open_cam()
             except RuntimeError:
                 continue
@@ -135,6 +145,15 @@ class Camera:
                 self.cam = self._cam_list.GetByIndex(self._cam_id)
 
             self.cam.Init()
+
+            for node in self.cam.GetNodeMap().GetNodes():
+                pit = node.GetPrincipalInterfaceType()
+                name = node.GetName()
+                if pit == PySpin.intfICommand:
+                    self._cam_methods[name] = PySpin.CCommandPtr(node)
+                elif pit in self._attr_types:
+                    self._cam_attr[name] = self._attr_types[pit](node)
+
             return self.cam
 
         except BaseException:
@@ -158,6 +177,18 @@ class Camera:
 
 if __name__ == '__main__':
     cam = Camera(0)
+    cam.reset_settings()
+    cam.set_cam_settings({
+        'TriggerMode': 'Off',
+        'AcquisitionFrameRateAuto': 'Off',
+        'AcquisitionFrameRateEnabled': True,
+        'AcquisitionFrameRate': 60,
+    })
+    cam.set_chunk_settings({
+        'FrameCounter': {'ChunkEnable': True, 'ChunkModeActive': True},
+        'Timestamp': {'ChunkEnable': True, 'ChunkModeActive': True}
+    })
+
     cam.start()
     cv2.namedWindow('Preview')
     while True:
