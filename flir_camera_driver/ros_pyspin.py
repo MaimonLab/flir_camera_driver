@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import PySpin
 from time import sleep
 
@@ -21,16 +22,16 @@ class Camera:
 
         self.cam = None
         self._is_running = False
+        self._img_cache = None
         self.cam = self.open_cam()
-
         self.size = (int(self.get_attr('Width')), int(self.get_attr('Height')))
 
     def get_new_frame(self, get_chunk=False):
-        img = self.cam.GetNextImage(PySpin.EVENT_TIMEOUT_INFINITE)
+        self._img_cache = self.cam.GetNextImage(PySpin.EVENT_TIMEOUT_INFINITE)
         if get_chunk:
-            return img.GetNDArray(), img.GetChunkData()
+            return self._img_cache.GetNDArray(), self._img_cache.GetChunkData()
         else:
-            return img.GetNDArray(), None
+            return self._img_cache.GetNDArray(), None
 
     def get_timestamp(self):
         self._cam_methods['TimestampLatch'].Execute()
@@ -168,10 +169,11 @@ class Camera:
 
     def destroy(self):
         self._is_running = False
+        self._img_cache.Release()
         self.cam.EndAcquisition()
         self.cam.DeInit()
         del self.cam
-        del self._cam_list
+        self._cam_list.Clear()
         self._system.ReleaseInstance()
 
 
