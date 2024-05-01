@@ -78,6 +78,7 @@ class SpinnakerCameraNode(BasicNode):
             "disregard_chunkdata": False,
             "stream_to_disk": False,
             "codec": "mjpeg",
+            "stream_fr": None,
             "output_filename": ""
         }
 
@@ -197,7 +198,7 @@ class SpinnakerCameraNode(BasicNode):
                 '-f', 'rawvideo',
                 '-vcodec', 'rawvideo',
                 '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
-                '-r', str(self.cam.get_attr('AcquisitionFrameRate')),
+                '-r', str(self.stream_fr) if self.stream_fr else str(self.cam.get_attr('AcquisitionFrameRate')),
                 '-pix_fmt', 'gray',
                 '-i', '-', '-an',
                 '-vcodec', self.codec,
@@ -210,7 +211,7 @@ class SpinnakerCameraNode(BasicNode):
                 '-f', 'rawvideo',
                 '-vcodec', 'rawvideo',
                 '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
-                '-r', str(self.cam.get_attr('AcquisitionFrameRate')),
+                '-r', str(self.stream_fr) if self.stream_fr else str(self.cam.get_attr('AcquisitionFrameRate')),
                 '-pix_fmt', 'gray',
                 '-i', '-', '-an',
                 '-vcodec', self.codec,
@@ -274,6 +275,7 @@ class SpinnakerCameraNode(BasicNode):
     def on_destroy(self):
         self.cam.destroy()
         if self.stream_to_disk:
+            self.buffer.join()
             self.stamps.close()
             self.pipe.stdin.close()
             self.pipe.wait()
