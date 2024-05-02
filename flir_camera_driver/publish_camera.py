@@ -275,6 +275,10 @@ class SpinnakerCameraNode(BasicNode):
     def on_destroy(self):
         self.cam.destroy()
         if self.stream_to_disk:
+            with self.buffer.mutex:
+                self.buffer.queue.clear()
+                self.buffer.all_tasks_done.notify_all()
+                self.buffer.unfinished_tasks = 0
             self.buffer.join()
             self.stamps.close()
             self.pipe.stdin.close()
