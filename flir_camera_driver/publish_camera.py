@@ -62,7 +62,6 @@ CAMERA_PRIORITY_SET_ORDER = [
 class SpinnakerCameraNode(BasicNode):
     def __init__(self):
         super().__init__(
-            name="publish_camera",
             automatically_declare_parameters_from_overrides=True
         )
 
@@ -76,9 +75,10 @@ class SpinnakerCameraNode(BasicNode):
             "flip_y": False,
             "qos_image_publish_reliable": False,
             "disregard_chunkdata": False,
+            "burn_timestamp": False,
             "stream_to_disk": False,
             "codec": "mjpeg",
-            "stream_fr": None,
+            "stream_fr": -1,
             "output_filename": ""
         }
 
@@ -170,7 +170,7 @@ class SpinnakerCameraNode(BasicNode):
         # set last_latch_time as now
         self.last_latch_time = time.time()
 
-    def burn_timestamp(self, img_cv, frame_id, timestamp):
+    def add_timestamp(self, img_cv, frame_id, timestamp):
         """Burn timestamp in bottom left of the image"""
         height = len(img_cv)
         timestamp = datetime.datetime.fromtimestamp(timestamp/1e9).strftime("%y/%m/%d %H:%M:%S")
@@ -198,7 +198,7 @@ class SpinnakerCameraNode(BasicNode):
                 '-f', 'rawvideo',
                 '-vcodec', 'rawvideo',
                 '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
-                '-r', str(self.stream_fr) if self.stream_fr else str(self.cam.get_attr('AcquisitionFrameRate')),
+                '-r', str(self.stream_fr) if self.stream_fr > 0 else str(self.cam.get_attr('AcquisitionFrameRate')),
                 '-pix_fmt', 'gray',
                 '-i', '-', '-an',
                 '-vcodec', self.codec,
@@ -211,7 +211,7 @@ class SpinnakerCameraNode(BasicNode):
                 '-f', 'rawvideo',
                 '-vcodec', 'rawvideo',
                 '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
-                '-r', str(self.stream_fr) if self.stream_fr else str(self.cam.get_attr('AcquisitionFrameRate')),
+                '-r', str(self.stream_fr) if self.stream_fr > 0 else str(self.cam.get_attr('AcquisitionFrameRate')),
                 '-pix_fmt', 'gray',
                 '-i', '-', '-an',
                 '-vcodec', self.codec,
@@ -255,8 +255,8 @@ class SpinnakerCameraNode(BasicNode):
                 stamp = Time(nanoseconds=timestamp).to_msg()
                 self.count_published_images += 1
 
-            if self.add_timestamp:
-                self.burn_timestamp(img_cv, frame_id, timestamp)
+            if self.burn_timestamp:
+                self.add_timestamp(img_cv, frame_id, timestamp)
 
             if self.stream_to_disk:
                 self.buffer.put((img_cv, frame_id, timestamp))
