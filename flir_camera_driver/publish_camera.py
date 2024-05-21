@@ -79,6 +79,7 @@ class SpinnakerCameraNode(BasicNode):
             "stream_to_disk": False,
             "codec": "mjpeg",
             "stream_fr": -1,
+            "record_every_nth_frame": 1,
             "output_filename": ""
         }
 
@@ -203,7 +204,7 @@ class SpinnakerCameraNode(BasicNode):
                 '-i', '-', '-an',
                 '-vcodec', self.codec,
                 '-rc', 'constqp', '-qp', '18',
-                f'{self.output_filename}_video.mp4'
+                f'{self.output_filename}.mp4'
             ]
         else:
             cmd = [
@@ -215,7 +216,7 @@ class SpinnakerCameraNode(BasicNode):
                 '-pix_fmt', 'gray',
                 '-i', '-', '-an',
                 '-vcodec', self.codec,
-                f'{self.output_filename}_video.mp4'
+                f'{self.output_filename}.mp4'
             ]
         self.pipe = subprocess.Popen(
             cmd, stdin=subprocess.PIPE,
@@ -253,13 +254,13 @@ class SpinnakerCameraNode(BasicNode):
                 frame_id = str(self.count_published_images)
                 timestamp = self.get_clock().now().nanoseconds
                 stamp = Time(nanoseconds=timestamp).to_msg()
-                self.count_published_images += 1
 
             if self.burn_timestamp:
                 self.add_timestamp(img_cv, frame_id, timestamp)
 
             if self.stream_to_disk:
-                self.buffer.put((img_cv, frame_id, timestamp))
+                if self.count_published_images % self.record_every_nth_frame == 0:
+                    self.buffer.put((img_cv, frame_id, timestamp))
 
             # convert image to ros2 Image message type
             # this will initialize an empty header
@@ -267,6 +268,7 @@ class SpinnakerCameraNode(BasicNode):
             img_msg.header.frame_id = frame_id
             img_msg.header.stamp = stamp
             self.pub_stream.publish(img_msg)
+            self.count_published_images += 1
 
             # if latching is past its timer period, redo latching
             if (time.time() - self.last_latch_time) > self.latch_timer_period:
