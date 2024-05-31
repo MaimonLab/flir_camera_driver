@@ -78,6 +78,7 @@ class SpinnakerCameraNode(BasicNode):
             "burn_timestamp": False,
             "stream_to_disk": False,
             "codec": "mjpeg",
+            "encoder_args": [],
             "stream_fr": -1,
             "record_every_nth_frame": 1,
             "output_filename": ""
@@ -191,33 +192,22 @@ class SpinnakerCameraNode(BasicNode):
         )
 
     def grab_and_save_frame(self):
+        cmd = [
+            'ffmpeg', '-y',
+            '-f', 'rawvideo',
+            '-vcodec', 'rawvideo',
+            '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
+            '-r', str(self.stream_fr) if self.stream_fr > 0 else str(self.cam.get_attr('AcquisitionFrameRate')),
+            '-pix_fmt', 'gray',
+            '-i', '-', '-an',
+            '-vcodec', self.codec,
+        ]
         if 'nvenc' in self.codec:
-            cmd = [
-                'ffmpeg', '-y',
-                '-hwaccel', 'cuda',
-                '-hwaccel_output_format', 'cuda',
-                '-f', 'rawvideo',
-                '-vcodec', 'rawvideo',
-                '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
-                '-r', str(self.stream_fr) if self.stream_fr > 0 else str(self.cam.get_attr('AcquisitionFrameRate')),
-                '-pix_fmt', 'gray',
-                '-i', '-', '-an',
-                '-vcodec', self.codec,
-                '-rc', 'constqp', '-qp', '18',
-                f'{self.output_filename}.mp4'
-            ]
-        else:
-            cmd = [
-                'ffmpeg', '-y',
-                '-f', 'rawvideo',
-                '-vcodec', 'rawvideo',
-                '-s', f'{self.cam.size[0]}x{self.cam.size[1]}',
-                '-r', str(self.stream_fr) if self.stream_fr > 0 else str(self.cam.get_attr('AcquisitionFrameRate')),
-                '-pix_fmt', 'gray',
-                '-i', '-', '-an',
-                '-vcodec', self.codec,
-                f'{self.output_filename}.mp4'
-            ]
+            cmd = cmd[:2] + ['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda'] + cmd[2:]
+            if '-rc' not in self.encoder_args:
+                cmd.extend(['-rc', 'constqp', '-qp', '18'])
+        cmd.extend(self.encoder_args)
+        cmd.append(f'{self.output_filename}.mp4')
         self.pipe = subprocess.Popen(
             cmd, stdin=subprocess.PIPE,
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
