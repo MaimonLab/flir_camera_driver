@@ -71,7 +71,6 @@ class SpinnakerCameraNode(BasicNode):
             "image_topic": "camera/image",
             "reset_camera_settings": False,
             "latch_timing_interval_s": 5,
-            "add_timestamp": False,
             "flip_y": False,
             "qos_image_publish_reliable": False,
             "disregard_chunkdata": False,
@@ -177,7 +176,7 @@ class SpinnakerCameraNode(BasicNode):
         height = len(img_cv)
         timestamp = datetime.datetime.fromtimestamp(timestamp/1e9).strftime("%y/%m/%d %H:%M:%S")
 
-        cv2.rectangle(img_cv, (0, height - 17), (165, height), 0, -1)
+        img_cv = cv2.rectangle(img_cv.copy(), (0, height - 17), (165, height), 0, -1)
         cv2.putText(
             img_cv, timestamp,
             (0, height - 5), cv2.FONT_HERSHEY_PLAIN,
@@ -218,6 +217,8 @@ class SpinnakerCameraNode(BasicNode):
 
         while rclpy.ok():
             img, frame_id, timestamp = self.buffer.get(block=True)
+            if img is None:
+                break
             self.stamps.write(f'{frame_id},{timestamp}\n')
             self.pipe.stdin.write(img.astype(np.uint8).tobytes())
             self.pipe.stdin.flush()
@@ -267,6 +268,7 @@ class SpinnakerCameraNode(BasicNode):
     def on_destroy(self):
         self.cam.destroy()
         if self.stream_to_disk:
+            self.buffer.put((None, None, None))
             with self.buffer.mutex:
                 self.buffer.queue.clear()
                 self.buffer.all_tasks_done.notify_all()
