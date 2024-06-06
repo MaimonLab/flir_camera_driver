@@ -171,9 +171,10 @@ class SpinnakerCameraNode(BasicNode):
         # set last_latch_time as now
         self.last_latch_time = time.time()
 
-    def add_timestamp(self, img_cv, frame_id, timestamp):
+    def add_timestamp(self, img_cv, frame_id, stamp):
         """Burn timestamp in bottom left of the image"""
         height = len(img_cv)
+        timestamp = int(stamp.sec * 1e9 + stamp.nanosec)
         timestamp = datetime.datetime.fromtimestamp(timestamp/1e9).strftime("%y/%m/%d %H:%M:%S")
 
         img_cv = cv2.rectangle(img_cv.copy(), (0, height - 17), (165, height), 0, -1)
@@ -215,7 +216,7 @@ class SpinnakerCameraNode(BasicNode):
         self.stamps = open(self.output_filename + '_timestamps.csv', 'w')
         self.stamps.write('frame_id,timestamp\n')
 
-        while rclpy.ok():
+        while True:
             img, frame_id, timestamp = self.buffer.get(block=True)
             if img is None:
                 break
@@ -247,7 +248,7 @@ class SpinnakerCameraNode(BasicNode):
                 stamp = Time(nanoseconds=timestamp).to_msg()
 
             if self.burn_timestamp:
-                self.add_timestamp(img_cv, frame_id, timestamp)
+                self.add_timestamp(img_cv, frame_id, stamp)
 
             if self.stream_to_disk:
                 if self.count_published_images % self.record_every_nth_frame == 0:
