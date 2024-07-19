@@ -80,6 +80,7 @@ class SpinnakerCameraNode(BasicNode):
             "encoder_args": [],
             "stream_fr": -1,
             "record_every_nth_frame": 1,
+            "publish_every_nth_frame": 1,
             "output_filename": ""
         }
 
@@ -113,7 +114,7 @@ class SpinnakerCameraNode(BasicNode):
 
         # bridge translates Image messages to cv2 images and vice versa
         self.bridge = CvBridge()
-        self.count_published_images = 0
+        self.count = 0
 
     def set_cam_settings(self):
         """Apply camera_settings (e.g. AcquisitionFrameRate)."""
@@ -243,7 +244,7 @@ class SpinnakerCameraNode(BasicNode):
                 timestamp = chunk_data.GetTimestamp() + self.offset_nanosec
                 stamp = Time(nanoseconds=timestamp).to_msg()
             else:
-                frame_id = str(self.count_published_images)
+                frame_id = str(self.count)
                 timestamp = self.get_clock().now().nanoseconds
                 stamp = Time(nanoseconds=timestamp).to_msg()
 
@@ -251,16 +252,18 @@ class SpinnakerCameraNode(BasicNode):
                 self.add_timestamp(img_cv, frame_id, stamp)
 
             if self.stream_to_disk:
-                if self.count_published_images % self.record_every_nth_frame == 0:
+                if self.count % self.record_every_nth_frame == 0:
                     self.buffer.put((img_cv, frame_id, timestamp))
 
             # convert image to ros2 Image message type
             # this will initialize an empty header
-            img_msg = self.bridge.cv2_to_imgmsg(img_cv)
-            img_msg.header.frame_id = frame_id
-            img_msg.header.stamp = stamp
-            self.pub_stream.publish(img_msg)
-            self.count_published_images += 1
+            if self.count % self.publish_every_nth_frame == 0:
+                img_msg = self.bridge.cv2_to_imgmsg(img_cv)
+                img_msg.header.frame_id = frame_id
+                img_msg.header.stamp = stamp
+                self.pub_stream.publish(img_msg)
+
+            self.count += 1
 
             # if latching is past its timer period, redo latching
             if (time.time() - self.last_latch_time) > self.latch_timer_period:
