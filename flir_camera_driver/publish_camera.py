@@ -214,13 +214,13 @@ class SpinnakerCameraNode(BasicNode):
         )
 
         self.stamps = open(self.output_filename + '_timestamps.csv', 'w')
-        self.stamps.write('frame_id,timestamp\n')
+        self.stamps.write('frame_id,chunk_timestamp,computer_timestamp,offset\n')
 
         while True:
-            img, frame_id, timestamp = self.buffer.get(block=True)
+            img, frame_id, chunk_timestamp, timestamp = self.buffer.get(block=True)
             if img is None:
                 break
-            self.stamps.write(f'{frame_id},{timestamp}\n')
+            self.stamps.write(f'{frame_id},{chunk_timestamp},{timestamp},{self.offset_nanosec}\n')
             self.pipe.stdin.write(img.astype(np.uint8).tobytes())
             self.pipe.stdin.flush()
 
@@ -244,15 +244,16 @@ class SpinnakerCameraNode(BasicNode):
                 stamp = Time(nanoseconds=timestamp).to_msg()
             else:
                 frame_id = str(self.count_published_images)
-                timestamp = self.get_clock().now().nanoseconds
                 stamp = Time(nanoseconds=timestamp).to_msg()
+            chunk_timestamp = chunk_data.GetTimestamp()
+            timestamp = self.get_clock().now().nanoseconds
 
             if self.burn_timestamp:
                 self.add_timestamp(img_cv, frame_id, stamp)
 
             if self.stream_to_disk:
                 if self.count_published_images % self.record_every_nth_frame == 0:
-                    self.buffer.put((img_cv, frame_id, timestamp))
+                    self.buffer.put((img_cv, frame_id, chunk_timestamp, timestamp))
 
             # convert image to ros2 Image message type
             # this will initialize an empty header

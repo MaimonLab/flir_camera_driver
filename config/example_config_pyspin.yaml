@@ -11,20 +11,21 @@ launch_settings:
   - package: flir_camera_driver
     executable: publish_camera
     name: camera
-#  - package: eternarig_gui
-#    executable: image_preview
-#    name: image_preview
+  - package: eternarig_gui
+    executable: image_preview
+    name: image_preview
 
 camera:
   ros__parameters:
-    cam_id: 18421887
-    qos_image_publish_reliable: True
-    add_timestamp: False
-    publish_grayscale: True
+    cam_id: 18518634
+    qos_image_publish_reliable: true
+    add_timestamp: false
+    publish_grayscale: true
     latch_timing_interval_s: 5
-    reset_camera_settings: False
-    stream_to_disk: True
-    codec: mjpeg
+    reset_camera_settings: true
+    stream_to_disk: true
+    codec: nvenc_hevc
+    quality: 24
     camera_settings:
       AcquisitionFrameRate: 60
       AcquisitionFrameRateAuto: Off
