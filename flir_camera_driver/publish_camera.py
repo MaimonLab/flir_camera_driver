@@ -31,9 +31,10 @@ import cv2
 from cv_bridge import CvBridge
 import datetime
 import numpy as np
-from queue import Queue
+from queue import Queue, Empty
 from sensor_msgs.msg import Image
 import subprocess
+from threading import Event
 import time
 import rclpy
 from rclpy.time import Time
@@ -110,6 +111,8 @@ class SpinnakerCameraNode(BasicNode):
         # set up video streamer if enabled
         if self.stream_to_disk:
             self.buffer = Queue(1)
+            self.term_ev = Event()
+            self.term_ev.clear()
             self.spawn_thread(self.grab_and_save_frame, daemon=True)
 
         # bridge translates Image messages to cv2 images and vice versa
@@ -217,14 +220,24 @@ class SpinnakerCameraNode(BasicNode):
         self.stamps = open(self.output_filename + '_timestamps.csv', 'w')
         self.stamps.write('frame_id,timestamp\n')
 
-        while True:
-            img, frame_id, timestamp = self.buffer.get(block=True)
-            if img is None:
-                break
+        while not self.term_ev.is_set():
+            try:
+                img, frame_id, timestamp = self.buffer.get(timeout=0.5)
+            except Empty:
+                continue
             self.stamps.write(f'{frame_id},{timestamp}\n')
             self.pipe.stdin.write(img.astype(np.uint8).tobytes())
             self.pipe.stdin.flush()
 
+        # shutting down async objects
+        with self.buffer.mutex:
+            self.buffer.queue.clear()
+            self.buffer.all_tasks_done.notify_all()
+            self.buffer.unfinished_tasks = 0
+        self.buffer.join()
+        self.stamps.close()
+        self.pipe.stdin.close()
+        self.pipe.wait()
         return
 
     def grab_and_publish_frame(self):
@@ -270,15 +283,7 @@ class SpinnakerCameraNode(BasicNode):
     def on_destroy(self):
         self.cam.destroy()
         if self.stream_to_disk:
-            self.buffer.put((None, None, None))
-            with self.buffer.mutex:
-                self.buffer.queue.clear()
-                self.buffer.all_tasks_done.notify_all()
-                self.buffer.unfinished_tasks = 0
-            self.buffer.join()
-            self.stamps.close()
-            self.pipe.stdin.close()
-            self.pipe.wait()
+            self.term_ev.set()
 
 
 def main():
