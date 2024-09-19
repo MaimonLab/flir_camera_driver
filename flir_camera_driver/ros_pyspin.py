@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import PySpin
 from time import sleep
+import traceback
+import warnings
 
 
 class Camera:
@@ -27,11 +29,20 @@ class Camera:
         self.size = (int(self.get_attr('Width')), int(self.get_attr('Height')))
 
     def get_new_frame(self, get_chunk=False):
-        self._img_cache = self.cam.GetNextImage(PySpin.EVENT_TIMEOUT_INFINITE)
-        if get_chunk:
-            return self._img_cache.GetNDArray(), self._img_cache.GetChunkData()
-        else:
-            return self._img_cache.GetNDArray(), None
+        try:
+            self._img_cache = self.cam.GetNextImage(5000)
+            if get_chunk:
+                return self._img_cache.GetNDArray(), self._img_cache.GetChunkData()
+            else:
+                return self._img_cache.GetNDArray(), None
+
+        except Exception as e:
+            warnings.warn(
+                f'Timeout on GetNextImage from Camera with serial: {self._cam_id}!'
+                f'\nResetting camera and trying again...'
+            )
+            self.reset_settings()
+            return self.get_new_frame(get_chunk)
 
     def get_timestamp(self):
         self._cam_methods['TimestampLatch'].Execute()
