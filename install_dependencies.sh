@@ -11,14 +11,8 @@ git clone git@github.com:MaimonLab/maimon_classes.git
 pip3 install opencv-python
 # pip3 install opencv-contrib-python
 
-# download spinner to the Downloads folder ,create if this doens't exist yet
-mkdir -p ~/Downloads
-cd ~/Downloads
-
-# Donwload and unzip 
-wget https://www.dropbox.com/sh/xod2fj9wqq0ie82/AABnzTO7hqbQ5v7ndBbzEevwa/spinnaker/spinnaker-2.3.0.77-Ubuntu20.04-amd64-pkg.tar.gz
-tar -xzf   spinnaker-2.3.0.77-Ubuntu20.04-amd64-pkg.tar.gz
-cd spinnaker-2.3.0.77-amd64
+# navigate to pre-extracted Spinnaker SDK files on server
+cd /mnt/maimondata01/lab_resources/software/
 
 # install other dependencies 
 sudo apt-get install -y libavcodec58 libavformat58 \
@@ -27,24 +21,16 @@ libpcre2-16-0 libdouble-conversion3 libxcb-xinput0 \
 libxcb-xinerama0
 
 # run the main installer script 
-./install_spinnaker.sh
+./spinnaker-3.2.0.62-amd64-pkg.20.04/spinnaker-3.2.0.62-amd64/install_spinnaker.sh
 
-# Download spinnaker_python 
-cd ~/Downloads
-wget https://www.dropbox.com/sh/xod2fj9wqq0ie82/AABu07_NN5hMkwb-W_E69wFja/spinnaker/spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz
-
-# create a directory and unzip it in there (this is a tarball) 
-mkdir spinnaker_python-2.3.0.77
-tar -xzf  spinnaker_python-2.3.0.77-Ubuntu20.04-cp38-cp38-linux_x86_64.tar.gz -C spinnaker_python-2.3.0.77
-cd spinnaker_python-2.3.0.77
-
-# install spinnaaker_python dependencies 
+# repeat for python .whl file
+cd /mnt/maimondata01/lab_resources/software/spinnaker_python-3.2.0.62-cp38-cp38-linux_x86_64
 sudo python3.8 -m pip install --upgrade numpy matplotlib
-
-# install spinnaker_python wheel 
-pip3 install spinnaker_python-2.3.0.77-cp38-cp38-linux_x86_64.whl 
-
+pip3 install spinnaker_python-3.2.0.62-cp38-cp38-linux_x86_64.whl
 pip3 install ruamel.yaml
+
+# update firmware for Chameleon3 cameras
+SpinUpdateConsole -R.* -B /mnt/maimondata01/lab_resources/software/cmln3-python1300_v1.2v1.3_cm3-u3-13y3-1.24.2-01.ez2
 
 echo "----------------------------------------------"
 echo "--------Finished installing flir_camera_driver"
