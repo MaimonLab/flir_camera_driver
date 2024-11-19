@@ -25,9 +25,15 @@ In this exmaple the parameters from `/config/example_config.yaml` under the head
 
 Use the installation script:
 
-    ./install_description.sh
+    ./install_description.sh -get_from=YOUR_MAIMONDATA_MNT_LOCATION/lab_resources/software
 
-This will install all dependencies and call the spinnaker install script. You will be prompted for options, most importantly:
+This will install all dependencies, including the Spinnaker SDK (v3.2.0.62) via its install script.
+If a FLIR Chameleon camera is connected, it will also attempt to update the firmware (v1.24.2-01).
+Firmware and SDK install scripts are stored on the lab's data server.
+Use the `-get_from` flag to specify the mount location of the data server (`/mnt/maimondata01/` by default).
+
+
+You may be prompted for options, most importantly:
 
 - Do you want to add a user to the **udev permission**? Here you want to say [yes], and add the username (`maimon` in my case). If you do not add this setting, your PointGrey USB cameras will not be detected in spinview and the spinnaker SDK.
 - You need an increased [usbfs](https://www.flir.com/support-center/iis/machine-vision/application-note/using-linux-with-usb-3.1/) memory. Ubuntu has it set to 16 Mb/s by default, but FLIR recommends setting this to 1000 Mb.
