@@ -1,12 +1,18 @@
 # Install Description
 
+Clone `maimon_classes` (>=v0.1.2):
+    
+    cd ~/maimon_ws/src
+    git clone git@github.com:MaimonLab/maimon_classes.git
+
 Install python dependencies
 
     pip3 install opencv-python
 
 <!-- pip3 install opencv-contrib-python -->
 
-We'll need to install **Spinnaker**, **spinnaker_python** and **pyspin-simple**.
+We'll need to install **Spinnaker** and **spinnaker_python**.
+As of `v0.2.0`, this package has been tested for compatibility up to `spinnaker-3.2.0.57`.
 
 1.  **Download and install Spinnaker** You can download [spinnaker](https://www.flir.com/products/spinnaker-sdk/) from FLIR's website. At the website go to:
 
@@ -69,7 +75,3 @@ We'll need to install **Spinnaker**, **spinnaker_python** and **pyspin-simple**.
         sudo apt install python3-pip
         sudo python3.8 -m pip install --upgrade numpy matplotlib
         pip3 install spinnaker_python-2.<tab-tab-to-complete>.whl
-
-    To simplify the interfacing with the pyspin library, the `flir_camera_driver` use the [simple_pyspin](https://github.com/klecknerlab/simple_pyspin) wrapper. We'll install it with:
-
-        pip3 install simple-pyspin

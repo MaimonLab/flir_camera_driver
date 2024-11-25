@@ -1,0 +1,47 @@
+launch_settings:
+  override_config_selection_for_this_file: False
+  quit_all_if_single_node_quits: True
+  verbose: False
+  save_data_to_folder: True
+  top_data_folder: ~/bringup_example_data/camera_test
+  prompt_notes: False
+  prompt_custom_experiment_name: False
+  use_date_sub_folder: True
+  nodes_to_launch:
+  - package: flir_camera_driver
+    executable: publish_camera
+    name: camera
+#  - package: eternarig_gui
+#    executable: image_preview
+#    name: image_preview
+
+camera:
+  ros__parameters:
+    cam_id: 18421887
+    qos_image_publish_reliable: True
+    add_timestamp: False
+    publish_grayscale: True
+    latch_timing_interval_s: 5
+    reset_camera_settings: False
+    stream_to_disk: True
+    codec: mjpeg
+    camera_settings:
+      AcquisitionFrameRate: 60
+      AcquisitionFrameRateAuto: Off
+      AcquisitionFrameRateEnabled: true
+      BinningVertical: 1
+      GainAuto: Off
+      Gain: 12
+      ExposureAuto: Off
+      ExposureTime: 14000
+      TriggerMode: Off
+      unknown_param: "test, test"
+    camera_chunkdata:
+      FrameCounter:
+        ChunkEnable: True
+        ChunkModeActive: True
+      randomChunk:
+        blabla: False
+      Timestamp:
+        ChunkEnable: True
+        ChunkModeActive: True
