@@ -8,7 +8,7 @@ sudo apt install -y python3-pip
 sudo apt-get install -y wget
 
 # install python packages required for spinnaker
-cd ~/maimon_ws/src
+cd ~/eternarig_ws/src
 git clone git@github.com:MaimonLab/maimon_classes.git
 pip3 install opencv-python
 
@@ -33,12 +33,16 @@ libpcre2-16-0 libdouble-conversion3 libxcb-xinput0 \
 libxcb-xinerama0
 
 # run the main installer script
-sudo bash ./spinnaker-3.2.0.62-amd64-pkg.20.04/spinnaker-3.2.0.62-amd64/install_spinnaker.sh
-
+#sudo bash ./spinnaker-3.2.0.62-amd64-pkg.20.04/spinnaker-3.2.0.62-amd64/install_spinnaker.sh
+cd $get_from_loc/spinnaker-3.2.0.62-amd64.22.04/
+sudo bash ./install_spinnaker.sh
 # repeat for python .whl file
-cd $get_from_loc/spinnaker_python-3.2.0.62-cp38-cp38-linux_x86_64
-sudo python3.8 -m pip install numpy matplotlib
-pip3 install spinnaker_python-3.2.0.62-cp38-cp38-linux_x86_64.whl
+#cd $get_from_loc/spinnaker_python-3.2.0.62-cp38-cp38-linux_x86_64
+
+sudo python3 -m pip install numpy matplotlib
+#pip3 install spinnaker_python-3.2.0.62-cp38-cp38-linux_x86_64.whl
+cd $get_from_loc
+pip3 install spinnaker_python-3.2.0.62-cp310-cp310-linux_x86_64.whl
 pip3 install ruamel.yaml
 
 ## update firmware for Chameleon3 cameras
