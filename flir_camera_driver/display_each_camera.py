@@ -1,6 +1,6 @@
-from simple_pyspin import Camera, list_cameras
 import cv2
-import time
+import PySpin
+from flir_camera_driver.ros_pyspin import Camera
 
 
 def main():
@@ -11,56 +11,48 @@ def main():
 
     fixme: currently hangs / freezes after some amount of time / frames. during
         the cam.get_array() call, unclear why."""
-    num_cams = len(list_cameras())
-    for cam_num in range(num_cams):
+    _system = PySpin.System.GetInstance()
 
-        with Camera(cam_num) as cam:
-            cam.init()
-            setattr(cam, "AcquisitionFrameRateAuto", "Off")
+    cameras = _system.GetCameras()
+    if not cameras.GetSize():
+        raise RuntimeError("No cameras found!")
+    for idx, cam in enumerate(cameras):
+        roscam = Camera(cam_id=idx)
+        print(f"Camera {idx}: {roscam.get_attr('DeviceSerialNumber')}")
+        roscam.open_cam()
+        roscam.start()
+        while True:
+            # immutable
+            img_cv, _ = roscam.get_new_frame(get_chunk=False)
+            height = len(img_cv) 
+            # make a mutable version of img_cv
+            img_cv = img_cv.copy()
+            cv2.putText(
+                img_cv,
+                f"Press N for next Camera, Q to quit.",
+                (0, height // 5),
+                cv2.FONT_HERSHEY_COMPLEX,
+                1,
+                (255, 255, 255),
+                1,
+            )
 
-            setattr(cam, "AcquisitionFrameRateEnabled", True)
-            setattr(cam, "AcquisitionFrameRate", 30)
-            setattr(cam, "BinningVertical", 2)
-            print(f"starting camera {cam.DeviceID}")
+            cv2.putText(
+                img_cv,
+                f"Camera: {roscam.get_attr('DeviceSerialNumber')}",
+                (0, height // 2),
+                cv2.FONT_HERSHEY_COMPLEX,
+                1.8,
+                (255, 255, 255),
+                2,
+            )
 
-            cam.start()
-
-            while True:
-                # pre_time = time.time()
-                # print("pre_get")
-                img_cv = cam.get_array()
-                # print(f"aq_t: {time.time() - pre_time}")
-                # print("post_get")
-                height = len(img_cv)
-                cv2.putText(
-                    img_cv,
-                    f"Press N for next Camera, Q to quit.",
-                    (0, height // 5),
-                    # (0, height - 5),
-                    cv2.FONT_HERSHEY_COMPLEX,
-                    1,
-                    (255, 255, 255),
-                    1,
-                )
-                cv2.putText(
-                    img_cv,
-                    f"Camera: {cam.DeviceID}",
-                    (0, height // 2),
-                    # (0, height - 5),
-                    cv2.FONT_HERSHEY_COMPLEX,
-                    1.8,
-                    (255, 255, 255),
-                    2,
-                )
-                # print("pre_show")
-                cv2.imshow("image", img_cv)
-                # print("show")
-                key = cv2.waitKey(1)
-                # print("wait")
-                if key & 0xFF == ord("n"):
-                    break
-                if key & 0xFF == ord("q"):
-                    return
+            cv2.imshow("image", img_cv)
+            key = cv2.waitKey(1)
+            if key & 0xFF == ord("n"):
+                break
+            if key & 0xFF == ord("q"):
+                return
     print("Done!")
     # break
 
