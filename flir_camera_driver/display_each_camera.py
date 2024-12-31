@@ -53,6 +53,8 @@ def main():
                 break
             if key & 0xFF == ord("q"):
                 return
+        roscam.destroy() # RIP BOZO
+    _system.ReleaseInstance()
     print("Done!")
     # break
 

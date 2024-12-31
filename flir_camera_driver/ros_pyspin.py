@@ -179,9 +179,9 @@ class Camera:
         self._is_running = True
 
     def destroy(self):
-        self._is_running = False
         self._img_cache.Release()
         self.cam.EndAcquisition()
+        self._is_running = False
         self.cam.DeInit()
         del self.cam
         self._cam_list.Clear()
