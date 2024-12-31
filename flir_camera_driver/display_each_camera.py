@@ -20,6 +20,10 @@ def main():
         roscam = Camera(cam_id=idx)
         print(f"Camera {idx}: {roscam.get_attr('DeviceSerialNumber')}")
         roscam.open_cam()
+        roscam.set_attr("AcquisitionFrameRateAuto", "Off")
+        roscam.set_attr("AcquisitionFrameRateEnable", True)
+        roscam.set_attr("AcquisitionFrameRate", 30)
+        roscam.set_attr("Binning Vertical", 2)
         roscam.start()
         while True:
             # immutable
