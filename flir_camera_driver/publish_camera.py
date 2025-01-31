@@ -246,6 +246,16 @@ class SpinnakerCameraNode(BasicNode):
         while rclpy.ok():
 
             img_cv, chunk_data = self.cam.get_new_frame(get_chunk=~self.disregard_chunkdata)
+            if img_cv is False:
+                self.print_error(
+                    f'*** Exception on getting new frame: {chunk_data}'
+                    f'\nResetting camera. This will take ~5 seconds '
+                    f'before camera is ready again.'
+                )
+                self.cam.reset_settings()
+                self.set_cam_settings()
+                continue
+
             if self.flip_y:
                 img_cv = cv2.flip(img_cv, 0)
 

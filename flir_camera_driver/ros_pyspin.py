@@ -48,10 +48,9 @@ class Camera:
         except Exception as e:
             warnings.warn(
                 f'Timeout on GetNextImage from Camera with serial: {self._cam_id}!'
-                f'\nResetting camera and trying again...'
+                f'\nException caught: {traceback.format_exc()}'
             )
-            self.reset_settings()
-            return self.get_new_frame(get_chunk)
+            return False, e
 
     def get_timestamp(self):
         self._cam_methods['TimestampLatch'].Execute()
