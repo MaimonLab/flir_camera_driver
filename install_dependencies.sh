@@ -63,6 +63,13 @@ elif [[ ${PYTHON_VERSION[1]}=="3.10"* ]]; then
 fi
 pip3 install ruamel.yaml
 
+echo "Spinnaker SDK successfully installed!"
+echo "----------------------------------------------"
+echo "------------Finished installing Spinnaker SDK!"
+echo "-If the following camera firmware update fails"
+echo "-RESTART your computer!-----------------------"
+echo "----------------------------------------------"
+
 # update firmware for Chameleon3 cameras
 devices=$( lsusb -d 0x1e10:0x3300 -v | grep iSerial | awk '{ print $3 }' )
 for dev in $devices; do
