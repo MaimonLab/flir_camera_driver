@@ -18,6 +18,15 @@ class Camera:
         self._cam_attr = {}
         self._cam_methods = {}
 
+        # some attributes are named different for BlackFly/Oryx cameras
+        self._is_bfs_orx = False
+        self._bfs_orx_attr_lut = {
+            'AcquisitionFrameRateEnabled': 'AcquisitionFrameRateEnable',
+            'AcquisitionFrameControlEnabled': 'AcquisitionFrameRateEnable',
+            'FrameCounter': 'FrameID',
+            'Timestamp': 'TimestampLatchValue',
+        }
+
         self._system = PySpin.System.GetInstance()
         self._cam_list = self._system.GetCameras()
         self._cam_id = cam_id if cam_id else 0
@@ -39,10 +48,9 @@ class Camera:
         except Exception as e:
             warnings.warn(
                 f'Timeout on GetNextImage from Camera with serial: {self._cam_id}!'
-                f'\nResetting camera and trying again...'
+                f'\nException caught: {traceback.format_exc()}'
             )
-            self.reset_settings()
-            return self.get_new_frame(get_chunk)
+            return False, e
 
     def get_timestamp(self):
         self._cam_methods['TimestampLatch'].Execute()
@@ -59,6 +67,8 @@ class Camera:
     def set_chunk_settings(self, settings: dict):
         for prop, val in settings.items():
             try:
+                if self._is_bfs_orx and prop in self._bfs_orx_attr_lut.keys():
+                    prop = self._bfs_orx_attr_lut[prop]
                 _entry = self._cam_attr['ChunkSelector'].GetEntryByName(prop)
                 if _entry is not None:
                     self.set_attr('ChunkSelector', _entry.GetValue())
@@ -76,6 +86,8 @@ class Camera:
 
     def get_attr(self, attr):
         try:
+            if self._is_bfs_orx and attr in self._bfs_orx_attr_lut.keys():
+                attr = self._bfs_orx_attr_lut[attr]
             if attr not in self._cam_attr:
                 return
             if PySpin.IsReadable(self._cam_attr[attr]):
@@ -94,6 +106,8 @@ class Camera:
 
     def set_attr(self, attr, val):
         try:
+            if self._is_bfs_orx and attr in self._bfs_orx_attr_lut.keys():
+                attr = self._bfs_orx_attr_lut[attr]
             if attr in self._cam_attr:
                 prop = self._cam_attr[attr]
                 if not PySpin.IsWritable(prop):
@@ -165,6 +179,10 @@ class Camera:
                     self._cam_methods[name] = PySpin.CCommandPtr(node)
                 elif pit in self._attr_types:
                     self._cam_attr[name] = self._attr_types[pit](node)
+
+            if ("BFS" in self.get_attr('DeviceModelName')
+                or "ORX" in self.get_attr('DeviceModelName')):
+                self._is_bfs_orx = True
 
             return self.cam
 
