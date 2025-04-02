@@ -124,6 +124,7 @@ class SpinnakerCameraNode(BasicNode):
         # Camera Reset, this will turn the camera off and on, resetting all parameters to the default
         if self.reset_camera_settings:
             self.cam.reset_settings()
+            self.reset_camera_settings = False
             self.print_warning("Camera restarted")
 
         # cam_dict parameters are divided into ones found in the priority set order,
@@ -252,7 +253,7 @@ class SpinnakerCameraNode(BasicNode):
                     f'\nResetting camera. This will take ~5 seconds '
                     f'before camera is ready again.'
                 )
-                self.cam.reset_settings()
+                self.reset_camera_settings = True
                 self.set_cam_settings()
                 continue
 

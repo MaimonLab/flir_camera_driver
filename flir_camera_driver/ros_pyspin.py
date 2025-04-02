@@ -38,6 +38,9 @@ class Camera:
         self.size = (int(self.get_attr('Width')), int(self.get_attr('Height')))
 
     def get_new_frame(self, get_chunk=False):
+        if not self._is_running:
+            self.start()
+
         try:
             self._img_cache = self.cam.GetNextImage(5000)
             if get_chunk:
@@ -140,10 +143,15 @@ class Camera:
             raise RuntimeWarning(f'Error settings attribute {attr}! Skipping...')
 
     def reset_settings(self):
+        if self._is_running:
+            self.cam.EndAcquisition()
+            self._is_running = False
+
         self._cam_id = self.get_attr('DeviceSerialNumber')
         self._cam_methods['DeviceReset'].Execute()
         self.cam.DeInit()
         self.cam = None
+
         while self.cam is None:
             sleep(5)
             try:
@@ -153,6 +161,8 @@ class Camera:
                 continue
 
     def open_cam(self):
+        self._is_running = False
+
         if not self._cam_list.GetSize():
             raise RuntimeError('No cameras detected!')
 
