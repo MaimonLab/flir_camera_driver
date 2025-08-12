@@ -88,6 +88,8 @@ class SpinnakerCameraNode(BasicNode):
         self.cam = Camera(self.cam_id)
 
         # Call method that sets camera properties
+        self.camera_settings = getattr(self, 'camera_settings', {})
+        self.camera_chunkdata = getattr(self, 'camera_chunkdata', {})
         self.set_cam_settings()
 
         # disregard chunkdata is a flag to deal with an issue where chunkdata are garbled
