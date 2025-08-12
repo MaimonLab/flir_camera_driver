@@ -47,10 +47,21 @@ echo "Installing Spinnaker build for: Ubuntu ${DISTRIB_RELEASE_V}, Python ${PYTH
 
 # run the main installer script
 if [[ $DISTRIB_RELEASE_V=="20.04" ]]; then
-    sudo bash ./spinnaker-3.2.0.62-amd64-pkg.20.04/spinnaker-3.2.0.62-amd64/install_spinnaker.sh
+    cd ./spinnaker-3.2.0.62-amd64-pkg.20.04/spinnaker-3.2.0.62-amd64/
 elif [[ $DISTRIB_RELEASE_V=="22.04" ]]; then
-    sudo bash ./spinnaker-3.2.0.62-amd64.22.04/install_spinnaker.sh
+    cd ./spinnaker-3.2.0.62-amd64.22.04/
 fi
+
+if ! (sudo test -x ./install_spinnaker.sh); then
+  echo "------------------------------------------------------------"
+  echo "---ERROR: Permission Denied for Spinnaker install script!---"
+  echo "------------------------------------------------------------"
+  exit 1
+fi
+
+sudo bash ./install_spinnaker.sh
+
+cd $get_from_loc
 
 # repeat for python .whl file
 if [[ ${PYTHON_VERSION[1]}=="3.8"* ]]; then
@@ -63,12 +74,11 @@ elif [[ ${PYTHON_VERSION[1]}=="3.10"* ]]; then
 fi
 pip3 install ruamel.yaml
 
-echo "Spinnaker SDK successfully installed!"
-echo "----------------------------------------------"
-echo "------------Finished installing Spinnaker SDK!"
-echo "-If the following camera firmware update fails"
-echo "-RESTART your computer!-----------------------"
-echo "----------------------------------------------"
+echo "---------------------------------------------------"
+echo "---Finished installing Spinnaker SDK!--------------"
+echo "---If the following camera firmware update fails---"
+echo "---RESTART your computer!--------------------------"
+echo "---------------------------------------------------"
 
 # update firmware for Chameleon3 cameras
 devices=$( lsusb -d 0x1e10:0x3300 -v | grep iSerial | awk '{ print $3 }' )
@@ -77,7 +87,7 @@ for dev in $devices; do
 done
 
 echo "----------------------------------------------"
-echo "--------Finished installing flir_camera_driver"
+echo "---Finished installing flir_camera_driver-----"
 echo "----------------------------------------------"
 
 cd $cwd

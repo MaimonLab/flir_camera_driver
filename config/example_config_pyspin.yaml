@@ -11,13 +11,12 @@ launch_settings:
   - package: flir_camera_driver
     executable: publish_camera
     name: camera
-#  - package: eternarig_gui
-#    executable: image_preview
-#    name: image_preview
+  - package: eternarig_gui
+    executable: image_preview
+    name: image_preview
 
 camera:
   ros__parameters:
-    cam_id: 18421887
     qos_image_publish_reliable: True
     add_timestamp: False
     publish_grayscale: True
